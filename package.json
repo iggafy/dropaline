@@ -1,6 +1,6 @@
 {
   "name": "dropaline",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "The physical internet for writers and readers.",
   "homepage": ".",
   "main": "electron/main.js",
@@ -48,6 +48,7 @@
     "mac": {
       "icon": "electron/icon.png",
       "target": "dmg",
+      "identity": null,
       "category": "public.app-category.productivity"
     }
   },
