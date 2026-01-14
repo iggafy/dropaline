@@ -65,6 +65,8 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 768,
     title: 'Drop a Line',
+    autoHideMenuBar: true, // Reclaim space on Linux/Windows
+    useContentSize: true,  // Ensure dimensions refer to the app area
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
