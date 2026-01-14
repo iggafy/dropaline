@@ -58,32 +58,13 @@ ipcMain.handle('print-to-pdf', async (event, { html, filename }) => {
   return false;
 });
 
-// --- Window Controls ---
-ipcMain.on('window-minimize', (event) => {
-  BrowserWindow.fromWebContents(event.sender).minimize();
-});
-
-ipcMain.on('window-maximize', (event) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  if (win.isMaximized()) {
-    win.unmaximize();
-  } else {
-    win.maximize();
-  }
-});
-
-ipcMain.on('window-close', (event) => {
-  BrowserWindow.fromWebContents(event.sender).close();
-});
-
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 1024,
     minHeight: 768,
-    title: '',
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // Mac style integrated title bar
+    title: 'Drop a Line',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
