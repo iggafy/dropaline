@@ -332,6 +332,21 @@ const App: React.FC = () => {
     setUserProfile(null);
   };
 
+  const handleDeleteAccount = async () => {
+    if (!session?.user) return;
+
+    // Call our secure RPC function to wipe everything
+    const { error } = await supabase.rpc('delete_user_account');
+
+    if (error) {
+      console.error('Failed to delete account:', error);
+      alert('Account deletion failed. Please contact support.');
+    } else {
+      // Cleanup session and state
+      await handleLogout();
+    }
+  };
+
   const handleAvatarUpload = async (file: File) => {
     if (!session?.user || !userProfile) return;
 
@@ -884,6 +899,7 @@ const App: React.FC = () => {
             }}
             onProcessBatch={processBatch}
             onLogout={handleLogout}
+            onDeleteAccount={handleDeleteAccount}
           />
         );
       default:

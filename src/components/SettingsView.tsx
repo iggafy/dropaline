@@ -20,6 +20,7 @@ interface SettingsViewProps {
   setCustomTime: (value: string) => void;
   onProcessBatch: () => void;
   onLogout: () => void;
+  onDeleteAccount: () => void;
   availablePrinters?: any[];
 }
 
@@ -39,9 +40,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   setCustomTime,
   onProcessBatch,
   onLogout,
+  onDeleteAccount,
   availablePrinters = []
 }) => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Local profile state for staging changes before save
@@ -346,13 +349,44 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
           {/* Account Management */}
           <section className="pt-8 border-t border-[#f2f2f2]">
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl border border-red-100 transition-all w-full justify-center shadow-sm"
-            >
-              <LogOut size={18} />
-              Log Out
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-[#48484a] bg-[#f5f5f7] hover:bg-[#ebebeb] rounded-xl border border-[#d1d1d6] transition-all w-full justify-center shadow-sm"
+              >
+                <LogOut size={18} />
+                Log Out
+              </button>
+
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full text-center py-2 text-[10px] font-bold text-[#86868b] hover:text-red-600 transition-colors uppercase tracking-widest"
+                >
+                  Delete Account...
+                </button>
+              ) : (
+                <div className="bg-red-50 border border-red-100 rounded-xl p-4 animate-in slide-in-from-bottom-2 fade-in">
+                  <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-3 text-center">
+                    Warning: This will permanently delete your profile, all drops, and comments.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 px-4 py-2 bg-white border border-[#d1d1d6] text-[#1d1d1f] rounded-lg text-xs font-bold hover:bg-[#f5f5f7]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={onDeleteAccount}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 shadow-sm"
+                    >
+                      Permenantly Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <p className="text-[10px] text-center text-[#86868b] mt-4 uppercase tracking-[0.2em]">
               DROP A LINE V1.0.0
             </p>
