@@ -59,7 +59,7 @@ function createWindow() {
     height: 800,
     minWidth: 1024,
     minHeight: 768,
-    title: 'Drop a Line',
+    title: '',
     titleBarStyle: 'hiddenInset', // Mac style integrated title bar
     webPreferences: {
       nodeIntegration: false,
