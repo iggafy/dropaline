@@ -35,7 +35,7 @@ const App: React.FC = () => {
   const [drops, setDrops] = useState<Drop[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  
+
   // Local Settings
   const [paperSaver, setPaperSaver] = useState<boolean>(() => loadFromStorage('dropaline_saver', false));
   const [printer, setPrinter] = useState<PrinterState>(() => loadFromStorage('dropaline_printer', INITIAL_PRINTER));
@@ -118,10 +118,10 @@ const App: React.FC = () => {
     // 3. Fetch Drops (from subscriptions + my own)
     // In a real app, we'd paginate this.
     // We also need to fetch likes and comments and user statuses.
-    
+
     // Simplification: Fetch last 20 drops from people I follow OR myself
     const authorsToFetch = [...subIds, session.user.id];
-    
+
     const { data: dropsData } = await supabase
       .from('drops')
       .select(`
@@ -139,7 +139,7 @@ const App: React.FC = () => {
       const mappedDrops: Drop[] = dropsData.map((d: any) => {
         const myStatus = d.user_drop_statuses.find((s: any) => s.user_id === session.user.id)?.status || 'received';
         const isLiked = d.likes.some((l: any) => l.user_id === session.user.id);
-        
+
         return {
           id: d.id,
           author: d.profiles.name,
@@ -164,11 +164,122 @@ const App: React.FC = () => {
     }
   };
 
+  // --- Persistence ---
+  useEffect(() => {
+    localStorage.setItem('dropaline_saver', JSON.stringify(paperSaver));
+  }, [paperSaver]);
+
+  useEffect(() => {
+    localStorage.setItem('dropaline_printer', JSON.stringify(printer));
+  }, [printer]);
+
+  useEffect(() => {
+    localStorage.setItem('dropaline_batch_mode', JSON.stringify(batching));
+  }, [batching]);
+
+  useEffect(() => {
+    localStorage.setItem('dropaline_batch_date', JSON.stringify(customDate));
+  }, [customDate]);
+
+  useEffect(() => {
+    localStorage.setItem('dropaline_batch_time', JSON.stringify(customTime));
+  }, [customTime]);
+
   // --- Actions ---
+
+  const handleProfileUpdate = async (updatedProfile: UserProfile) => {
+    if (!session?.user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        name: updatedProfile.name,
+        handle: updatedProfile.handle,
+        bio: updatedProfile.bio,
+      })
+      .eq('id', session.user.id);
+
+    if (error) {
+      console.error('Failed to update profile', error);
+      return;
+    }
+
+    setUserProfile(updatedProfile);
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!session?.user || !userProfile) return;
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${session.user.id}-${Math.random()}.${fileExt}`;
+    const filePath = `avatars/${fileName}`;
+
+    // 1. Upload to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('media') // Assuming 'media' bucket exists
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Upload error', uploadError);
+      return;
+    }
+
+    // 2. Get Public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('media')
+      .getPublicUrl(filePath);
+
+    // 3. Update Profile
+    const updatedProfile = { ...userProfile, avatar: publicUrl };
+    await handleProfileUpdate(updatedProfile);
+  };
+
+  const handleSearchCreators = async (query: string) => {
+    if (!session?.user) return;
+    if (!query.trim()) {
+      fetchData(); // Reset to default view
+      return;
+    }
+
+    const { data: results, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .neq('id', session.user.id)
+      .ilike('handle', `%${query.replace('@', '')}%`)
+      .limit(20);
+
+    if (error) {
+      console.error('Search error', error);
+      return;
+    }
+
+    if (results) {
+      // Get current subscriptions to mark isSubscribed
+      const { data: subs } = await supabase
+        .from('subscriptions')
+        .select('creator_id, auto_print')
+        .eq('subscriber_id', session.user.id);
+
+      const subIds = subs?.map(s => s.creator_id) || [];
+      const subMap = new Map(subs?.map(s => [s.creator_id, s.auto_print]));
+
+      const mapped = results.map(p => ({
+        id: p.id,
+        name: p.name,
+        handle: p.handle,
+        bio: p.bio || '',
+        avatar: p.avatar_url,
+        subscriberCount: 0, // Mock or secondary query
+        isSubscribed: subIds.includes(p.id),
+        autoPrint: subMap.get(p.id) || false
+      }));
+      setCreators(mapped);
+    }
+  };
 
   const handlePrintDrop = async (dropId: string) => {
     setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: dropId }));
-    
+
     // Simulate print time then update DB
     setTimeout(async () => {
       // Update local state
@@ -179,12 +290,12 @@ const App: React.FC = () => {
       if (session?.user) {
         const { error } = await supabase
           .from('user_drop_statuses')
-          .upsert({ 
-            user_id: session.user.id, 
-            drop_id: dropId, 
-            status: 'printed' 
+          .upsert({
+            user_id: session.user.id,
+            drop_id: dropId,
+            status: 'printed'
           }, { onConflict: 'user_id, drop_id' });
-        
+
         if (error) console.error('Failed to update print status', error);
       }
     }, 3000);
@@ -196,9 +307,9 @@ const App: React.FC = () => {
     if (!drop || !session?.user) return;
 
     const newLikedState = !drop.liked;
-    setDrops(prev => prev.map(d => 
-      d.id === dropId 
-        ? { ...d, liked: newLikedState, likes: newLikedState ? d.likes + 1 : d.likes - 1 } 
+    setDrops(prev => prev.map(d =>
+      d.id === dropId
+        ? { ...d, liked: newLikedState, likes: newLikedState ? d.likes + 1 : d.likes - 1 }
         : d
     ));
 
@@ -281,7 +392,7 @@ const App: React.FC = () => {
     const willSubscribe = !creator.isSubscribed;
 
     // Optimistic
-    setCreators(prev => prev.map(c => 
+    setCreators(prev => prev.map(c =>
       c.id === creatorId ? { ...c, isSubscribed: willSubscribe } : c
     ));
 
@@ -290,7 +401,7 @@ const App: React.FC = () => {
     } else {
       await supabase.from('subscriptions').delete().match({ subscriber_id: session.user.id, creator_id: creatorId });
     }
-    
+
     // Refresh drops
     fetchData();
   };
@@ -299,10 +410,10 @@ const App: React.FC = () => {
     if (!session?.user) return;
     const creator = creators.find(c => c.id === creatorId);
     if (!creator) return;
-    
+
     const newVal = !creator.autoPrint;
 
-    setCreators(prev => prev.map(c => 
+    setCreators(prev => prev.map(c =>
       c.id === creatorId ? { ...c, autoPrint: newVal } : c
     ));
 
@@ -312,11 +423,22 @@ const App: React.FC = () => {
       .match({ subscriber_id: session.user.id, creator_id: creatorId });
   };
 
-  // Simulating drop in real backend means... well, we can't easily "simulate" an incoming event without realtime setup.
-  // For the prototype, we will just re-fetch data to check for updates.
-  const simulateIncomingDrop = () => {
-    fetchData();
-  };
+  // Real-time setup
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const channel = supabase
+      .channel('public:drops')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'drops' }, (payload) => {
+        // Only fetch if it's someone we follow or ourselves
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session]);
 
   const processBatch = () => {
     // In a real backend scenario, this would likely update statuses in DB from 'queued' to 'received'/'printed'.
@@ -327,20 +449,17 @@ const App: React.FC = () => {
     setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: 'Batch Release' }));
 
     setTimeout(async () => {
-        // Update DB statuses
-        const updates = queuedDrops.map(d => {
-           // check if auto-print enabled for this author? 
-           // Logic is complex to replicate perfectly without more queries, 
-           // assumes 'received' for batch release unless specific logic added.
-           return supabase
-             .from('user_drop_statuses')
-             .upsert({ user_id: session.user.id, drop_id: d.id, status: 'received' }, { onConflict: 'user_id, drop_id' });
-        });
-        
-        await Promise.all(updates);
-        fetchData(); // Refresh UI
-        
-        setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
+      // Update DB statuses
+      const updates = queuedDrops.map(d => {
+        return supabase
+          .from('user_drop_statuses')
+          .upsert({ user_id: session.user.id, drop_id: d.id, status: 'received' }, { onConflict: 'user_id, drop_id' });
+      });
+
+      await Promise.all(updates);
+      fetchData(); // Refresh UI
+
+      setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
     }, 2000);
   };
 
@@ -360,38 +479,40 @@ const App: React.FC = () => {
     switch (view) {
       case AppView.READER:
         return (
-          <ReaderView 
-            drops={drops} 
-            printer={printer} 
+          <ReaderView
+            drops={drops}
+            printer={printer}
             paperSaver={paperSaver}
-            onPrint={handlePrintDrop} 
+            onPrint={handlePrintDrop}
             onLike={handleLikeDrop}
             onAddComment={handleAddComment}
-            onSimulateDrop={simulateIncomingDrop}
+            onSimulateDrop={fetchData}
           />
         );
       case AppView.WRITER:
         return (
-          <WriterView 
+          <WriterView
             userProfile={userProfile}
-            onPublish={handlePublishDrop} 
+            onPublish={handlePublishDrop}
           />
         );
       case AppView.SUBSCRIPTIONS:
         return (
-          <SubscriptionsView 
+          <SubscriptionsView
             creators={creators}
             onToggleSubscription={toggleSubscription}
             onToggleAutoPrint={toggleAutoPrint}
+            onSearch={handleSearchCreators}
           />
         );
       case AppView.SETTINGS:
         return (
-          <SettingsView 
-            printer={printer} 
-            setPrinter={setPrinter} 
+          <SettingsView
+            printer={printer}
+            setPrinter={setPrinter}
             userProfile={userProfile}
-            setUserProfile={setUserProfile}
+            onProfileUpdate={handleProfileUpdate}
+            onAvatarUpload={handleAvatarUpload}
             paperSaver={paperSaver}
             setPaperSaver={setPaperSaver}
             batching={batching}
@@ -410,9 +531,9 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#f5f5f7]">
-      <Sidebar 
-        currentView={view} 
-        setView={setView} 
+      <Sidebar
+        currentView={view}
+        setView={setView}
         userProfile={userProfile}
       />
       <main className="flex-1 overflow-hidden relative">

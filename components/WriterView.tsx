@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Send, Sparkles, Layout, Eye, Save, Check } from 'lucide-react';
+import { Send, Layout, Eye, Save, Check } from 'lucide-react';
 import { Drop, UserProfile } from '../types';
-import { getGeminiAssistance } from '../services/gemini';
 
 interface WriterViewProps {
   onPublish: (drop: Drop) => void;
@@ -15,7 +14,6 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [currentLayout, setCurrentLayout] = useState<LayoutType>('classic');
-  const [isAiLoading, setIsAiLoading] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
@@ -51,22 +49,9 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
 
     setSaveStatus('saving');
     const timeoutId = setTimeout(saveToStorage, 800); // Debounce 800ms
-    
+
     return () => clearTimeout(timeoutId);
   }, [title, content, currentLayout]);
-
-  const handleAiHelp = async () => {
-    if (!content && !title) return;
-    setIsAiLoading(true);
-    try {
-      const suggestion = await getGeminiAssistance(content || title);
-      setContent(prev => prev + '\n\n' + suggestion);
-    } catch (error) {
-      console.error('AI Assistance failed:', error);
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
 
   const handlePublish = () => {
     if (!title || !content) return;
@@ -84,7 +69,7 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
       comments: 0
     };
     onPublish(newDrop);
-    
+
     // Reset and Clear Draft
     setTitle('');
     setContent('');
@@ -125,14 +110,14 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
             {saveStatus === 'saving' && 'Saving...'}
             {saveStatus === 'saved' && 'Draft saved'}
           </div>
-          <button 
+          <button
             onClick={() => setIsPreviewMode(!isPreviewMode)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-[#48484a] hover:bg-[#f5f5f7] transition-all"
           >
             <Eye size={14} />
             {isPreviewMode ? 'Edit' : 'Preview'}
           </button>
-          <button 
+          <button
             onClick={handlePublish}
             disabled={!title || !content}
             className="flex items-center gap-2 bg-black text-white px-5 py-1.5 rounded-full text-xs font-semibold hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md shadow-black/10"
@@ -151,23 +136,23 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
               <div className={`absolute top-8 left-8 text-[10px] text-[#86868b] uppercase tracking-tighter border-b border-[#d1d1d6] pb-1 w-full max-w-[calc(100%-64px)] ${currentLayout === 'zine' ? 'border-dashed' : ''}`}>
                 DropaLine Network • {new Date().toLocaleDateString()}
               </div>
-              
+
               <h1 className={`text-3xl text-center mt-12 mb-8 ${currentLayout === 'zine' ? 'font-black uppercase tracking-tighter' : 'font-bold'}`}>
                 {title || 'Untitled'}
               </h1>
-              
+
               <div className={`text-[#1d1d1f] text-sm leading-[1.8] whitespace-pre-wrap flex-1 ${currentLayout === 'minimal' ? 'text-gray-600' : ''}`}>
                 {content || 'Your content will appear here...'}
               </div>
-              
+
               <div className="text-[10px] text-center text-[#d1d1d6] mt-8 uppercase tracking-[0.2em]">
                 {currentLayout === 'zine' ? '*** END OF TRANSMISSION ***' : 'End of Transmission'}
               </div>
             </div>
           ) : (
             <div className={`max-w-3xl mx-auto h-full flex flex-col ${getLayoutClasses(currentLayout)}`}>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Untitled Drop"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -186,29 +171,20 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
         {/* Floating Toolbar */}
         {!isPreviewMode && (
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/80 backdrop-blur-xl p-2 rounded-2xl border border-[#d1d1d6] shadow-2xl z-50">
-             <button 
-               onClick={handleAiHelp}
-               disabled={isAiLoading}
-               className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#0066cc] hover:bg-[#0066cc]/5 transition-all disabled:opacity-50"
-             >
-               <Sparkles size={16} className={isAiLoading ? 'animate-spin' : ''} />
-               {isAiLoading ? 'Thinking...' : 'AI Refine'}
-             </button>
-             <div className="w-[1px] h-4 bg-[#d1d1d6] mx-1"></div>
-             <button 
-               onClick={toggleLayout}
-               className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#48484a] hover:bg-[#f5f5f7] transition-all min-w-[100px] justify-center"
-             >
-               <Layout size={16} />
-               {getLayoutLabel(currentLayout)}
-             </button>
-             <div className="w-[1px] h-4 bg-[#d1d1d6] mx-1"></div>
-             <div 
-               className="p-2 rounded-xl text-[#48484a] flex items-center justify-center w-8 h-8" 
-               title="Auto-saved to device"
-             >
-               {saveStatus === 'saved' ? <Check size={18} className="text-green-600" /> : <Save size={18} className={saveStatus === 'saving' ? 'animate-pulse text-[#0066cc]' : ''} />}
-             </div>
+            <button
+              onClick={toggleLayout}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#48484a] hover:bg-[#f5f5f7] transition-all min-w-[100px] justify-center"
+            >
+              <Layout size={16} />
+              {getLayoutLabel(currentLayout)}
+            </button>
+            <div className="w-[1px] h-4 bg-[#d1d1d6] mx-1"></div>
+            <div
+              className="p-2 rounded-xl text-[#48484a] flex items-center justify-center w-8 h-8"
+              title="Auto-saved to device"
+            >
+              {saveStatus === 'saved' ? <Check size={18} className="text-green-600" /> : <Save size={18} className={saveStatus === 'saving' ? 'animate-pulse text-[#0066cc]' : ''} />}
+            </div>
           </div>
         )}
       </div>
