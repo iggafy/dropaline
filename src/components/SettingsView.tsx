@@ -106,7 +106,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               {/* Avatar */}
               <div className="relative group shrink-0">
                 <div className="w-24 h-24 rounded-full overflow-hidden border border-[#d1d1d6] bg-gray-50">
-                  <img src={isEditingProfile ? tempProfile.avatar : userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                  <img
+                    src={(isEditingProfile ? tempProfile.avatar : userProfile.avatar) || `https://api.dicebear.com/7.x/shapes/svg?seed=${userProfile.handle}`}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <input
                   type="file"

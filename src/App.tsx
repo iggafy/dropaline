@@ -216,6 +216,7 @@ const App: React.FC = () => {
           id: d.id,
           author: d.profiles.name,
           authorHandle: d.profiles.handle,
+          authorAvatar: d.profiles.avatar_url,
           title: d.title,
           content: d.content,
           timestamp: new Date(d.created_at).getTime(),
@@ -228,6 +229,7 @@ const App: React.FC = () => {
           commentList: d.comments.map((c: any) => ({
             id: c.id,
             authorHandle: c.profiles.handle,
+            avatar: c.profiles.avatar_url,
             text: c.text,
             timestamp: new Date(c.created_at).getTime()
           }))
@@ -267,6 +269,15 @@ const App: React.FC = () => {
     setUserProfile(updatedProfile);
   };
 
+  const getAvatarUrl = (url?: string, handle?: string) => {
+    if (url && url.includes('supabase.co/storage')) {
+      // Add a cache buster if it's a supabase URL
+      return `${url}?t=${new Date().getTime()}`;
+    }
+    if (url && url.trim() !== '') return url;
+    return `https://api.dicebear.com/7.x/shapes/svg?seed=${handle || 'neutral'}`;
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -291,9 +302,11 @@ const App: React.FC = () => {
     }
 
     // 2. Get Public URL
-    const { data: { publicUrl } } = supabase.storage
+    const { data } = supabase.storage
       .from('avatars')
       .getPublicUrl(filePath);
+
+    const publicUrl = data.publicUrl;
 
     // 3. Update Profile
     const updatedProfile = { ...userProfile, avatar: publicUrl };

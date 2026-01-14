@@ -26,6 +26,7 @@ export interface Comment {
   id: string;
   authorHandle: string;
   authorName?: string;
+  avatar?: string;
   text: string;
   timestamp: number; // Converted from created_at
 }
@@ -34,6 +35,7 @@ export interface Drop {
   id: string;
   author: string;
   authorHandle: string;
+  authorAvatar?: string;
   title: string;
   content: string;
   timestamp: number; // Converted from created_at

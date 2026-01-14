@@ -138,7 +138,11 @@ const CreatorCard: React.FC<{ creator: Creator; onToggle: () => void; onToggleAu
   <div className="flex items-center justify-between p-5 rounded-2xl border border-[#f2f2f2] bg-white shadow-sm hover:shadow-md transition-all group">
     <div className="flex items-center gap-5">
       <div className="relative">
-        <img src={creator.avatar} alt={creator.name} className="w-14 h-14 rounded-full border border-[#e5e5e5] object-cover bg-gray-100" />
+        <img
+          src={creator.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${creator.handle}`}
+          alt={creator.name}
+          className="w-14 h-14 rounded-full border border-[#e5e5e5] object-cover bg-gray-100"
+        />
         {creator.isFollowing && (
           <div className="absolute -bottom-1 -right-1 bg-green-500 text-white p-0.5 rounded-full border-2 border-white">
             <UserCheck size={10} />

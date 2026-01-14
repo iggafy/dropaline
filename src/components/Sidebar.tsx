@@ -29,7 +29,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
       {/* User Profile Snippet */}
       <div className="flex items-center gap-3 px-2 mb-8 mt-2">
         <div className="w-9 h-9 rounded-lg overflow-hidden border border-[#d1d1d6] shadow-sm">
-          <img src={userProfile.avatar} alt="User" className="w-full h-full object-cover" />
+          <img
+            src={userProfile.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${userProfile.handle}`}
+            alt="User"
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className="flex flex-col">
           <h1 className="text-sm font-semibold text-[#1d1d1f] leading-tight">DropaLine</h1>

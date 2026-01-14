@@ -80,13 +80,22 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
               }`}
           >
             <div className="flex justify-between items-start mb-4">
-              <div>
-                <span className={`text-xs font-semibold uppercase tracking-wide ${paperSaver ? 'text-gray-500' : 'text-[#0066cc]'}`}>
-                  @{drop.authorHandle}
-                </span>
-                <h3 className={`text-lg mt-1 ${paperSaver ? 'font-medium text-gray-700' : 'font-bold text-[#1d1d1f]'}`}>
-                  {drop.title}
-                </h3>
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-10 h-10 rounded-full overflow-hidden border border-[#d1d1d6] ${paperSaver ? 'grayscale' : ''}`}>
+                  <img
+                    src={drop.authorAvatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${drop.authorHandle}`}
+                    alt="Author"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <span className={`text-xs font-semibold uppercase tracking-wide ${paperSaver ? 'text-gray-500' : 'text-[#0066cc]'}`}>
+                    @{drop.authorHandle}
+                  </span>
+                  <h3 className={`text-lg mt-0.5 ${paperSaver ? 'font-medium text-gray-700' : 'font-bold text-[#1d1d1f]'}`}>
+                    {drop.title}
+                  </h3>
+                </div>
               </div>
               <div className="flex items-center gap-2 text-[11px] text-[#86868b]">
                 {drop.status === 'printed' ? (
@@ -167,7 +176,11 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                     drop.commentList.map((comment) => (
                       <div key={comment.id} className="flex gap-2 items-start">
                         <div className={`w-6 h-6 rounded-full shrink-0 overflow-hidden border border-[#d1d1d6] ${paperSaver ? 'grayscale' : ''}`}>
-                          <img src={`https://api.dicebear.com/7.x/shapes/svg?seed=${comment.authorHandle}`} alt="Avatar" className="w-full h-full object-cover" />
+                          <img
+                            src={comment.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${comment.authorHandle}`}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         <div className={`p-2.5 rounded-r-xl rounded-bl-xl text-xs text-[#1d1d1f] ${paperSaver ? 'bg-white border border-gray-100' : 'bg-[#f5f5f7]'}`}>
                           <span className="font-bold mr-1 block sm:inline">@{comment.authorHandle}</span>

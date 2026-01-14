@@ -144,7 +144,16 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
                                         selectedDrop.commentList.map((comment) => (
                                             <div key={comment.id} className="bg-white p-4 rounded-xl border border-[#e5e5e5] shadow-sm space-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-bold text-[#0066cc]">@{comment.authorHandle}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-full overflow-hidden border border-[#e5e5e5]">
+                                                            <img
+                                                                src={comment.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${comment.authorHandle}`}
+                                                                alt="Avatar"
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                        <span className="text-xs font-bold text-[#0066cc]">@{comment.authorHandle}</span>
+                                                    </div>
                                                     <span className="text-[10px] text-[#86868b]">{new Date(comment.timestamp).toLocaleDateString()}</span>
                                                 </div>
                                                 <p className="text-sm text-[#48484a] leading-relaxed">{comment.text}</p>
