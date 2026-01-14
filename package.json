@@ -1,6 +1,6 @@
 {
   "name": "dropaline",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Writers’ words. Readers’ paper.",
   "homepage": ".",
   "main": "electron/main.js",
