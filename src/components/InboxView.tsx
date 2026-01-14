@@ -92,13 +92,13 @@ export const InboxView: React.FC<InboxViewProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white overflow-hidden relative">
+    <div className="h-full flex flex-col bg-[var(--primary-bg)] overflow-hidden relative text-[var(--text-main)]">
       {/* Header */}
-      <header className="h-16 flex items-center justify-between px-8 border-b border-[#f2f2f2] shrink-0">
-        <h2 className="text-xl font-bold text-[#1d1d1f]">Inbox</h2>
+      <header className="h-16 flex items-center justify-between px-8 border-b border-[var(--border-main)] shrink-0 bg-[var(--primary-bg)]">
+        <h2 className="text-xl font-bold text-[var(--text-main)]">Inbox</h2>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-[#f5f5f7] px-3 py-1.5 rounded-full text-xs font-bold text-[#48484a] uppercase tracking-tighter shadow-sm border border-black/5">
-            <span className="text-[10px] text-[#86868b]">Output:</span>
+          <div className="flex items-center gap-2 bg-[var(--text-main)]/[0.05] px-3 py-1.5 rounded-full text-xs font-bold text-[var(--text-main)] uppercase tracking-tighter shadow-sm border border-[var(--glass-border)]">
+            <span className="text-[10px] text-[var(--text-secondary)]">Output:</span>
             <div className={`w-1.5 h-1.5 rounded-full ${printer.isConnected ? 'bg-green-500 shadow-[0_0_5px_green]' : 'bg-red-500 pulse'}`}></div>
             {printer.name === 'SAVE_AS_PDF' ? 'Digital PDF' : printer.name}
           </div>
@@ -110,7 +110,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
         {drops.map((drop) => (
           <div
             key={drop.id}
-            className="group relative border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 max-w-2xl mx-auto bg-white border-[#e5e5e5]"
+            className="group relative border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 max-w-2xl mx-auto bg-[var(--card-bg)] border-[var(--border-main)]"
           >
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3 mb-2">
@@ -122,25 +122,25 @@ export const InboxView: React.FC<InboxViewProps> = ({
                   />
                 </div>
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-[#0066cc]">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-blue)]">
                     @{drop.authorHandle}
                   </span>
-                  <h3 className="text-lg mt-0.5 font-bold text-[#1d1d1f]">
+                  <h3 className="text-lg mt-0.5 font-bold text-[var(--text-main)]">
                     {drop.title}
                   </h3>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-[#86868b]">
+              <div className="flex items-center gap-2 text-[11px] text-[var(--text-secondary)]">
                 {drop.status === 'printed' ? (
-                  <span className="flex items-center gap-1 font-medium text-green-600">
+                  <span className="flex items-center gap-1 font-medium text-[var(--accent-green)]">
                     <CheckCircle2 size={12} /> Printed
                   </span>
                 ) : drop.status === 'queued' ? (
-                  <span className="flex items-center gap-1 text-orange-600 font-medium bg-orange-50 px-2 py-0.5 rounded-full">
+                  <span className="flex items-center gap-1 text-[var(--accent-orange)] font-medium bg-[var(--accent-orange)]/10 px-2 py-0.5 rounded-full">
                     <Hourglass size={12} /> Queued for Batch
                   </span>
                 ) : (printer.isPrinting && printer.currentJob === drop.id) ? (
-                  <span className="flex items-center gap-1 text-[#0066cc] font-medium animate-pulse">
+                  <span className="flex items-center gap-1 text-[var(--accent-blue)] font-medium animate-pulse">
                     <Clock size={12} /> Printing...
                   </span>
                 ) : (
@@ -151,22 +151,22 @@ export const InboxView: React.FC<InboxViewProps> = ({
               </div>
             </div>
 
-            <p className="text-sm leading-relaxed mb-6 line-clamp-3 italic text-[#48484a]">
+            <p className="text-sm leading-relaxed mb-6 line-clamp-3 italic text-[var(--text-secondary)]">
               "{drop.content.replace(/<[^>]*>?/gm, '')}"
             </p>
 
-            <div className="flex items-center justify-between pt-4 border-t border-[#f2f2f2]">
+            <div className="flex items-center justify-between pt-4 border-t border-[var(--border-main)]">
               <div className="flex items-center gap-2">
                 {drop.status === 'printed' ? (
                   <>
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200 cursor-default">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20 cursor-default">
                       <CheckCircle2 size={14} />
                       Printed
                     </div>
                     <button
                       onClick={() => onPrint(drop.id)}
                       disabled={printer.isPrinting}
-                      className="flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#ebebeb] transition-all"
+                      className="flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold bg-[var(--text-main)]/[0.05] text-[var(--text-main)] hover:bg-[var(--text-main)]/[0.1] transition-all"
                     >
                       <RotateCcw size={14} />
                       Re-print
@@ -176,7 +176,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
                   <button
                     onClick={() => onPrint(drop.id)}
                     disabled={printer.isPrinting}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all bg-black text-white hover:bg-black/90 active:scale-95 shadow-lg shadow-black/10"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all bg-[var(--text-main)] text-[var(--card-bg)] hover:opacity-90 active:scale-95 shadow-lg shadow-black/10"
                   >
                     <Printer size={14} />
                     {drop.status === 'queued' ? 'Print Now' : 'Print'}
@@ -184,7 +184,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
                 )}
                 <button
                   onClick={() => handlePreview(drop)}
-                  className="p-2 rounded-full hover:bg-[#f5f5f7] text-[#48484a] transition-colors"
+                  className="p-2 rounded-full hover:bg-[var(--text-main)]/[0.05] text-[var(--text-secondary)] transition-colors"
                   title="Preview"
                 >
                   <Eye size={16} />
@@ -194,7 +194,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => onLike(drop.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-xs font-medium ${drop.liked ? 'text-red-500 bg-red-50' : 'text-[#86868b] hover:bg-[#f5f5f7]'
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-xs font-medium ${drop.liked ? 'text-[var(--accent-pink)] bg-[var(--accent-pink)]/10' : 'text-[var(--text-secondary)] hover:bg-[var(--text-main)]/[0.05]'
                     }`}
                 >
                   <Heart size={16} className={drop.liked ? 'fill-current' : ''} />
@@ -202,7 +202,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
                 </button>
                 <button
                   onClick={() => toggleComments(drop.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-xs font-medium ${expandedCommentsId === drop.id ? 'bg-[#f5f5f7] text-[#1d1d1f]' : 'text-[#86868b] hover:bg-[#f5f5f7]'
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-xs font-medium ${expandedCommentsId === drop.id ? 'bg-[var(--text-main)]/[0.05] text-[var(--text-main)]' : 'text-[var(--text-secondary)] hover:bg-[var(--text-main)]/[0.05]'
                     }`}
                 >
                   <MessageCircle size={16} />
@@ -213,7 +213,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
 
             {/* Expanded Comments Section */}
             {expandedCommentsId === drop.id && (
-              <div className="mt-4 pt-4 border-t border-[#f2f2f2] animate-in fade-in slide-in-from-top-2">
+              <div className="mt-4 pt-4 border-t border-[var(--border-main)] animate-in fade-in slide-in-from-top-2">
                 <div className="space-y-3 mb-4 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                   {drop.commentList && drop.commentList.length > 0 ? (
                     drop.commentList
@@ -229,7 +229,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
                         />
                       ))
                   ) : (
-                    <div className="text-center py-4 text-xs text-[#86868b] italic">
+                    <div className="text-center py-4 text-xs text-[var(--text-secondary)] italic">
                       No comments yet. Be the first to drop a line.
                     </div>
                   )}
@@ -237,14 +237,14 @@ export const InboxView: React.FC<InboxViewProps> = ({
 
                 <div className="relative">
                   {activeParentId && (
-                    <div className="flex items-center justify-between mb-2 px-3 py-1.5 bg-[#f0f7ff] rounded-lg border border-[#0066cc]/20">
-                      <span className="text-[10px] font-bold text-[#0066cc] uppercase tracking-wider">Replying to message</span>
+                    <div className="flex items-center justify-between mb-2 px-3 py-1.5 bg-[var(--accent-blue)]/[0.1] rounded-lg border border-[var(--accent-blue)]/20">
+                      <span className="text-[10px] font-bold text-[var(--accent-blue)] uppercase tracking-wider">Replying to message</span>
                       <button
                         onClick={() => {
                           setActiveParentId(null);
                           setReplyText('');
                         }}
-                        className="text-[10px] font-bold text-[#86868b] hover:text-[#1d1d1f]"
+                        className="text-[10px] font-bold text-[var(--text-secondary)] hover:text-[var(--text-main)]"
                       >Cancel</button>
                     </div>
                   )}
@@ -255,11 +255,11 @@ export const InboxView: React.FC<InboxViewProps> = ({
                       onChange={(e) => setReplyText(e.target.value)}
                       onKeyDown={(e) => handleKeyDown(e, drop.id)}
                       placeholder="Write a reply..."
-                      className="w-full border rounded-full py-2 pl-4 pr-10 text-xs focus:outline-none transition-colors bg-white border-[#e5e5e5] focus:border-[#d1d1d6]"
+                      className="w-full border rounded-full py-2 pl-4 pr-10 text-xs focus:outline-none transition-colors bg-[var(--card-bg)] border-[var(--border-main)] focus:border-[var(--text-secondary)] text-[var(--text-main)]"
                     />
                     <button
                       onClick={() => handleSendComment(drop.id)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 hover:text-[#004499] disabled:opacity-30 text-[#0066cc]"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 hover:opacity-80 disabled:opacity-30 text-[var(--accent-blue)]"
                       disabled={!replyText.trim()}
                     >
                       <Send size={14} />
@@ -274,12 +274,12 @@ export const InboxView: React.FC<InboxViewProps> = ({
         {drops.length > 0 && (
           <div ref={loadMoreRef} className="h-24 flex items-center justify-center">
             {hasMore ? (
-              <div className="h-1.5 w-1.5 rounded-full bg-[#d1d1d6] opacity-50"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-[var(--text-secondary)] opacity-50"></div>
             ) : (
               <div className="flex flex-col items-center gap-2 opacity-30">
-                <div className="w-16 h-[1px] bg-[#d1d1d6]"></div>
-                <span className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest">End of Relay</span>
-                <div className="w-16 h-[1px] bg-[#d1d1d6]"></div>
+                <div className="w-16 h-[1px] bg-[var(--text-secondary)]"></div>
+                <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">End of Relay</span>
+                <div className="w-16 h-[1px] bg-[var(--text-secondary)]"></div>
               </div>
             )}
           </div>
@@ -287,11 +287,11 @@ export const InboxView: React.FC<InboxViewProps> = ({
 
         {drops.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-20 h-20 bg-[#f5f5f7] rounded-3xl flex items-center justify-center text-[#d1d1d6] mb-6 border border-[#f2f2f2] shadow-sm">
+            <div className="w-20 h-20 bg-[var(--text-main)]/[0.02] rounded-3xl flex items-center justify-center text-[var(--text-secondary)] mb-6 border border-[var(--border-main)] shadow-sm">
               <Inbox size={40} />
             </div>
-            <h3 className="text-xl font-bold text-[#1d1d1f]">Your inbox is quiet</h3>
-            <p className="text-[#86868b] text-sm mt-2 max-w-[280px]">New transmissions from writers you follow will appear here as they are relayed.</p>
+            <h3 className="text-xl font-bold text-[var(--text-main)]">Your inbox is quiet</h3>
+            <p className="text-[var(--text-secondary)] text-sm mt-2 max-w-[280px]">New transmissions from writers you follow will appear here as they are relayed.</p>
           </div>
         )}
       </div>

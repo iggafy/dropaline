@@ -120,7 +120,9 @@ const App: React.FC = () => {
         theme: profile.theme_preference || 'light',
         allowPrivateDrops: profile.allow_private_drops !== false,
         privateLineExceptions: profile.private_line_exceptions || [],
-        socialLinks: profile.social_links || []
+        socialLinks: profile.social_links || [],
+        printColorMode: profile.print_color_mode || 'color',
+        isAdmin: profile.is_admin
       };
       setUserProfile(p);
       setDoubleSided(p.doubleSided || false);
@@ -284,7 +286,7 @@ const App: React.FC = () => {
             encryptedTitle: decryptContent(tEnc, tNonce, d.sender.public_key, secretKey) || '[Encrypted]',
             encryptedContent: decryptContent(cEnc, cNonce, d.sender.public_key, secretKey) || '[Encrypted]',
             timestamp: new Date(d.created_at).getTime(),
-            status: 'received'
+            status: d.status || 'pending'
           } as PrivateDrop;
         });
         setPrivateDrops(mapped);
@@ -414,7 +416,8 @@ const App: React.FC = () => {
         theme_preference: updatedProfile.theme,
         allow_private_drops: updatedProfile.allowPrivateDrops,
         private_line_exceptions: updatedProfile.privateLineExceptions,
-        social_links: updatedProfile.socialLinks
+        social_links: updatedProfile.socialLinks,
+        print_color_mode: updatedProfile.printColorMode
       })
       .eq('id', session.user.id);
 
@@ -630,7 +633,7 @@ const App: React.FC = () => {
 
   const executePrintJob = async (drop: Drop) => {
     if (!(window as any).electron) {
-      console.warn('Physical printing requires the Linux Gateway Client.');
+      console.warn('Physical printing requires the Drop a Line Desktop App.');
       return false;
     }
 
@@ -792,13 +795,17 @@ const App: React.FC = () => {
     }));
   };
 
-  const handlePublishDrop = async (newDrop: Drop) => {
+  const handlePublishDrop = async (newDrop: Drop, asNetwork: boolean = false) => {
     if (!session?.user) return;
+
+    const author_id = asNetwork && userProfile?.isAdmin
+      ? '00000000-0000-0000-0000-000000000000'
+      : session.user.id;
 
     const { data, error } = await supabase
       .from('drops')
       .insert({
-        author_id: session.user.id,
+        author_id,
         title: newDrop.title,
         content: newDrop.content,
         layout: newDrop.layout
@@ -873,19 +880,50 @@ const App: React.FC = () => {
       return creator?.autoPrint === true;
     });
 
-    // 2. Private Drops
-    const privateToPrint = privateDrops.filter(d => {
-      if (d.status !== 'accepted' || autoPrintProcessedIds.current.has(d.id)) return false;
+    // 2. Private Drops (Auto-Accept & Print if Trusted)
+    const privateToAutoProcess = privateDrops.filter(d => {
+      if (autoPrintProcessedIds.current.has(d.id)) return false;
       const contact = privateContacts.find(c => c.contactId === d.senderId);
-      return contact?.autoPrint === true;
+      if (!contact || !contact.autoPrint) return false;
+
+      // We process if it's pending (to auto-accept) OR if it's already accepted but not processed by this machine
+      return d.status === 'pending' || d.status === 'accepted';
     });
 
     if (regularToPrint.length > 0) {
       const drop = regularToPrint[0];
       autoPrintProcessedIds.current.add(drop.id);
       handlePrintDrop(drop.id);
+    } else if (privateToAutoProcess.length > 0) {
+      const drop = privateToAutoProcess[0];
+      autoPrintProcessedIds.current.add(drop.id);
+
+      // Auto-Print Private Drop
+      (async () => {
+        // Prepare as a Drop object for executePrintJob
+        const printObj = {
+          id: drop.id,
+          title: drop.encryptedTitle,
+          content: drop.encryptedContent,
+          authorHandle: drop.senderHandle,
+          layout: 'classic' as any
+        };
+
+        await handlePrintDrop(drop.id, printObj);
+
+        // If it was pending, mark it as accepted in the DB
+        if (drop.status === 'pending') {
+          await supabase
+            .from('private_drops')
+            .update({ status: 'accepted' })
+            .eq('id', drop.id);
+
+          // Re-fetch to update local state status
+          fetchData();
+        }
+      })();
     }
-  }, [drops, creators, printer.isPrinting, batching]);
+  }, [drops, privateDrops, creators, privateContacts, printer.isPrinting, batching]);
 
   // Consolidating batch release engine here
   useEffect(() => {

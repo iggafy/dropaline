@@ -28,41 +28,41 @@ export const CommentItem: React.FC<CommentItemProps> = ({
     return (
         <div className="flex flex-col gap-2">
             {/* The main comment card */}
-            <div className={`bg-white p-3 rounded-2xl border border-[#e5e5e5] shadow-sm hover:shadow-md transition-shadow group relative ${depth > 0 ? 'ml-6' : ''}`}>
+            <div className={`bg-[var(--card-bg)] p-3 rounded-2xl border border-[var(--border-main)] shadow-sm hover:shadow-md transition-shadow group relative ${depth > 0 ? 'ml-6' : ''}`}>
                 {/* Visual thread line for replies */}
                 {depth > 0 && (
-                    <div className="absolute -left-3 top-0 bottom-0 w-[2px] bg-[#f2f2f2] rounded-full"></div>
+                    <div className="absolute -left-3 top-0 bottom-0 w-[2px] bg-[var(--border-main)] rounded-full"></div>
                 )}
 
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full overflow-hidden border border-[#e5e5e5]">
+                        <div className="w-6 h-6 rounded-full overflow-hidden border border-[var(--border-main)]">
                             <img
                                 src={comment.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${comment.authorHandle}`}
                                 alt="Avatar"
                                 className="w-full h-full object-cover"
                             />
                         </div>
-                        <span className="text-xs font-bold text-[#0066cc]">@{comment.authorHandle}</span>
+                        <span className="text-xs font-bold text-[var(--accent-blue)]">@{comment.authorHandle}</span>
                     </div>
-                    <span className="text-[10px] text-[#86868b]">{new Date(comment.timestamp).toLocaleDateString()}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)]">{new Date(comment.timestamp).toLocaleDateString()}</span>
                 </div>
 
-                <p className="text-sm text-[#48484a] leading-relaxed mb-3">
+                <p className="text-sm text-[var(--text-main)] leading-relaxed mb-3">
                     {comment.text}
                 </p>
 
-                <div className="flex items-center gap-4 border-t border-[#f2f2f2] pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-4 border-t border-[var(--border-main)] pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                         onClick={() => onReply(comment.authorHandle, comment.id)}
-                        className="flex items-center gap-1.5 text-[10px] font-bold text-[#86868b] hover:text-[#0066cc] uppercase tracking-wider"
+                        className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-secondary)] hover:text-[var(--accent-blue)] uppercase tracking-wider"
                     >
                         <Send size={10} />
                         Reply
                     </button>
                     <button
                         onClick={() => onLike(dropId, comment.id)}
-                        className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${comment.liked ? 'text-red-500' : 'text-[#86868b] hover:text-red-500'}`}
+                        className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${comment.liked ? 'text-red-500' : 'text-[var(--text-secondary)] hover:text-red-500'}`}
                     >
                         <Heart size={10} className={comment.liked ? 'fill-current' : ''} />
                         {comment.liked ? 'Liked' : 'Like'}

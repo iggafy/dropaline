@@ -1,10 +1,18 @@
-
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const isDev = !app.isPackaged;
 
 Menu.setApplicationMenu(null);
 
+
+ipcMain.handle('manual-update-check', () => {
+  if (!isDev) {
+    autoUpdater.checkForUpdatesAndNotify();
+    return true;
+  }
+  return false;
+});
 
 ipcMain.handle('get-printers', async () => {
   const win = new BrowserWindow({ show: false });
@@ -79,8 +87,17 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../build/index.html'));
+    autoUpdater.checkForUpdatesAndNotify();
   }
 }
+
+autoUpdater.on('update-available', () => {
+  console.log('Update available.');
+});
+
+autoUpdater.on('update-downloaded', () => {
+  console.log('Update downloaded; will install on restart');
+});
 
 app.whenReady().then(() => {
   createWindow();

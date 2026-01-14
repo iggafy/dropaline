@@ -82,28 +82,28 @@ export const DraftsView: React.FC<DraftsViewProps> = ({ onEditDraft, onCreateDra
     );
 
     return (
-        <div className="h-full flex flex-col bg-white overflow-hidden">
-            <header className="h-16 flex items-center px-8 border-b border-[#f2f2f2] shrink-0 justify-between">
+        <div className="h-full flex flex-col bg-[var(--primary-bg)] overflow-hidden text-[var(--text-main)]">
+            <header className="h-16 flex items-center px-8 border-b border-[var(--border-main)] shrink-0 justify-between bg-[var(--primary-bg)]">
                 <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-bold text-[#1d1d1f]">Drafts</h2>
-                    <span className="px-2 py-0.5 bg-[#f5f5f7] rounded-full text-[10px] font-bold text-[#86868b] uppercase tracking-wider">
+                    <h2 className="text-xl font-bold text-[var(--text-main)]">Drafts</h2>
+                    <span className="px-2 py-0.5 bg-[var(--text-main)]/[0.05] rounded-full text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                         {drafts.length} Saved
                     </span>
                 </div>
                 <div className="flex items-center">
                     <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b]" />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
                         <input
                             type="text"
                             placeholder="Search drafts..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 pr-4 py-1.5 bg-[#f5f5f7] border-none rounded-full text-xs focus:ring-2 focus:ring-black/5 w-64"
+                            className="pl-9 pr-4 py-1.5 bg-[var(--text-main)]/[0.05] border-none rounded-full text-xs focus:ring-2 focus:ring-[var(--accent-blue)]/10 w-64 text-[var(--text-main)] placeholder:[var(--text-secondary)]"
                         />
                     </div>
                     <button
                         onClick={onCreateDraft}
-                        className="ml-4 flex items-center gap-2 bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-black/80 transition-all shadow-sm"
+                        className="ml-4 flex items-center gap-2 bg-[var(--text-main)] text-[var(--card-bg)] px-4 py-1.5 rounded-full text-xs font-bold hover:opacity-90 transition-all shadow-sm"
                     >
                         <Edit3 size={14} />
                         New Draft
@@ -118,10 +118,10 @@ export const DraftsView: React.FC<DraftsViewProps> = ({ onEditDraft, onCreateDra
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
                         </div>
                     ) : filteredDrafts.length === 0 ? (
-                        <div className="text-center py-20 bg-[#fafafa] rounded-2xl border border-dashed border-[#d1d1d6]">
-                            <FileText size={48} className="mx-auto text-[#d1d1d6] mb-4" />
-                            <h3 className="text-lg font-bold text-[#1d1d1f]">No drafts found</h3>
-                            <p className="text-sm text-[#86868b] mt-1">
+                        <div className="text-center py-20 bg-[var(--card-bg)] rounded-3xl border border-dashed border-[var(--border-main)] shadow-sm">
+                            <FileText size={48} className="mx-auto text-[var(--text-secondary)] mb-4 opacity-50" />
+                            <h3 className="text-lg font-bold text-[var(--text-main)]">No drafts found</h3>
+                            <p className="text-sm text-[var(--text-secondary)] mt-1">
                                 {searchQuery ? 'Try a different search term.' : 'Your works in progress will appear here.'}
                             </p>
                         </div>
@@ -131,14 +131,14 @@ export const DraftsView: React.FC<DraftsViewProps> = ({ onEditDraft, onCreateDra
                                 <div
                                     key={draft.id}
                                     onClick={() => onEditDraft(draft)}
-                                    className="group p-6 bg-white border border-[#f2f2f2] rounded-2xl hover:border-[#d1d1d6] hover:shadow-sm transition-all cursor-pointer flex items-center justify-between"
+                                    className="group p-6 bg-[var(--card-bg)] border border-[var(--border-main)] rounded-2xl hover:border-[var(--text-secondary)] hover:shadow-sm transition-all cursor-pointer flex items-center justify-between"
                                 >
                                     <div className="flex items-center gap-4 min-w-0">
-                                        <div className="w-10 h-10 rounded-xl bg-[#f5f5f7] flex items-center justify-center text-[#86868b] group-hover:bg-black group-hover:text-white transition-colors">
+                                        <div className="w-10 h-10 rounded-xl bg-[var(--text-main)]/[0.05] flex items-center justify-center text-[var(--text-secondary)] group-hover:bg-[var(--text-main)] group-hover:text-[var(--card-bg)] transition-colors">
                                             <FileText size={20} />
                                         </div>
                                         <div className="min-w-0">
-                                            <h4 className="text-sm font-bold text-[#1d1d1f] truncate group-hover:text-[#0066cc] transition-colors">
+                                            <h4 className="text-sm font-bold text-[var(--text-main)] truncate group-hover:text-[var(--accent-blue)] transition-colors">
                                                 {draft.title}
                                             </h4>
                                             <div className="flex items-center gap-3 mt-1">

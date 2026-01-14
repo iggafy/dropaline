@@ -28,7 +28,9 @@ export interface UserProfile {
   allowPrivateDrops?: boolean;
   privateLineExceptions?: string[];
   socialLinks?: { label: string; url: string }[];
+  isAdmin?: boolean;
 }
+
 
 export interface Comment {
   id: string;

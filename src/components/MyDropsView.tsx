@@ -50,9 +50,9 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, printer, onPrin
     };
 
     return (
-        <div className="h-full flex flex-col bg-white overflow-hidden">
-            <header className="h-16 flex items-center px-8 border-b border-[#f2f2f2] shrink-0 justify-between">
-                <h2 className="text-xl font-bold text-[#1d1d1f]">My Lines</h2>
+        <div className="h-full flex flex-col bg-[var(--primary-bg)] overflow-hidden text-[var(--text-main)]">
+            <header className="h-16 flex items-center px-8 border-b border-[var(--border-main)] shrink-0 justify-between bg-[var(--primary-bg)]">
+                <h2 className="text-xl font-bold text-[var(--text-main)]">My Stats</h2>
             </header>
 
             <div className="flex-1 flex overflow-hidden">
@@ -60,8 +60,10 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, printer, onPrin
                 <div className={`flex-1 overflow-y-auto ${selectedDropId ? 'hidden md:block' : 'block'}`}>
                     <div className="p-8 max-w-4xl mx-auto space-y-4">
                         {drops.length === 0 ? (
-                            <div className="text-center py-20 bg-[#fafafa] rounded-2xl border border-dashed border-[#d1d1d6]">
-                                <BarChart size={48} className="mx-auto text-[#d1d1d6]" />
+                            <div className="text-center py-20 bg-[var(--card-bg)] rounded-3xl border border-dashed border-[var(--border-main)] shadow-sm">
+                                <BarChart size={48} className="mx-auto text-[var(--text-secondary)] opacity-50" />
+                                <h3 className="text-sm font-bold text-[var(--text-main)] mt-4">No activity yet</h3>
+                                <p className="text-xs text-[var(--text-secondary)] mt-1">Transmissions you send will appear here.</p>
                             </div>
                         ) : (
                             drops.map((drop) => {
@@ -70,16 +72,16 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, printer, onPrin
                                         key={drop.id}
                                         onClick={() => setSelectedDropId(drop.id)}
                                         className={`group p-6 rounded-2xl border transition-all cursor-pointer ${selectedDropId === drop.id
-                                            ? 'bg-[#f0f7ff] border-[#0066cc] shadow-md'
-                                            : 'bg-white border-[#f2f2f2] hover:border-[#d1d1d6] hover:shadow-sm'
+                                            ? 'bg-[var(--accent-blue)]/[0.1] border-[var(--accent-blue)] shadow-md'
+                                            : 'bg-[var(--card-bg)] border-[var(--border-main)] hover:shadow-sm'
                                             }`}
                                     >
                                         <div className="flex justify-between items-start mb-4">
                                             <div>
-                                                <h4 className="text-base font-bold text-[#1d1d1f] group-hover:text-[#0066cc] transition-colors">
+                                                <h4 className="text-base font-bold text-[var(--text-main)] group-hover:text-[var(--accent-blue)] transition-colors">
                                                     {drop.title}
                                                 </h4>
-                                                <p className="text-xs text-[#86868b] mt-1">
+                                                <p className="text-xs text-[var(--text-secondary)] mt-1">
                                                     Relayed {new Date(drop.timestamp).toLocaleDateString()}
                                                 </p>
                                             </div>
@@ -140,8 +142,8 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, printer, onPrin
 
                 {/* Engagement Panel (Details) */}
                 {selectedDropId && selectedDrop && (
-                    <div className="w-full md:w-[450px] border-l border-[#f2f2f2] flex flex-col bg-white animate-in slide-in-from-right duration-300">
-                        <header className="h-16 flex items-center justify-between px-6 border-b border-[#f2f2f2] bg-white shrink-0">
+                    <div className="w-full md:w-[450px] border-l border-[var(--border-main)] flex flex-col bg-[var(--card-bg)] animate-in slide-in-from-right duration-300">
+                        <header className="h-16 flex items-center justify-between px-6 border-b border-[var(--border-main)] bg-[var(--card-bg)] shrink-0">
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => setSelectedDropId(null)}
@@ -157,7 +159,7 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, printer, onPrin
                             </div>
                         </header>
 
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#fafafa]">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--primary-bg)]">
                             {/* Comments Section */}
                             <div className="space-y-4">
                                 {selectedDrop.commentList && selectedDrop.commentList.length > 0 ? (
@@ -175,10 +177,10 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, printer, onPrin
                                         ))
                                 ) : (
                                     <div className="text-center py-20 opacity-50">
-                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-[#e5e5e5]">
-                                            <MessageCircle size={20} className="text-[#d1d1d6]" />
+                                        <div className="w-12 h-12 bg-[var(--primary-bg)] rounded-full flex items-center justify-center mx-auto mb-4 border border-[var(--border-main)]">
+                                            <MessageCircle size={20} className="text-[var(--text-secondary)]" />
                                         </div>
-                                        <p className="text-xs font-medium text-[#86868b]">No feedback yet on this transmission.</p>
+                                        <p className="text-xs font-medium text-[var(--text-secondary)]">No feedback yet on this transmission.</p>
                                     </div>
                                 )}
                             </div>
@@ -205,7 +207,7 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, printer, onPrin
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
                                     placeholder={replyText.startsWith('@') ? `Messaging ${replyText.split(' ')[0]}...` : "Reply to thread..."}
-                                    className="w-full bg-[#f5f5f7] border-none rounded-2xl py-3 pl-4 pr-12 text-sm focus:ring-2 focus:ring-[#0066cc]/20 transition-all placeholder:text-[#86868b]"
+                                    className="w-full bg-[var(--text-main)]/[0.05] border-none rounded-2xl py-3 pl-4 pr-12 text-sm focus:ring-2 focus:ring-[var(--accent-blue)]/20 transition-all placeholder:text-[var(--text-secondary)] text-[var(--text-main)]"
                                 />
                                 <button
                                     type="submit"

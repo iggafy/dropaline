@@ -288,12 +288,12 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
 
     if (viewMode === 'compose') {
         return (
-            <div className="h-full flex flex-col bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <header className="h-16 flex items-center px-8 shrink-0 justify-between bg-white z-10 border-b border-[#f2f2f2]">
+            <div className="h-full flex flex-col bg-[var(--primary-bg)] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <header className="h-16 flex items-center px-8 shrink-0 justify-between bg-[var(--primary-bg)] z-10 border-b border-[var(--border-main)]">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setViewMode('list')}
-                            className="text-sm font-bold text-[#86868b] hover:text-[#1d1d1f] transition-colors"
+                            className="text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--text-main)] transition-colors"
                         >
                             Cancel
                         </button>
@@ -302,7 +302,7 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsPreviewMode(!isPreviewMode)}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-[#48484a] hover:bg-[#f5f5f7] transition-all"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-[var(--text-main)] hover:bg-[var(--text-main)]/[0.05] transition-all"
                         >
                             <User size={14} />
                             {isPreviewMode ? 'Edit' : 'Preview'}
@@ -310,7 +310,7 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
                         <button
                             onClick={handleSend}
                             disabled={sending || !recipientHandle || !title}
-                            className="flex items-center gap-2 bg-black text-white px-5 py-1.5 rounded-full text-xs font-semibold hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md shadow-black/10"
+                            className="flex items-center gap-2 bg-[var(--text-main)] text-[var(--card-bg)] px-5 py-1.5 rounded-full text-xs font-semibold hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md shadow-black/10"
                         >
                             <Lock size={14} />
                             {sending ? 'Encrypting...' : 'Secure Send'}
@@ -320,14 +320,14 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
 
                 <div className="flex-1 flex overflow-hidden relative">
                     {/* Preview Container */}
-                    <div className={`flex-1 overflow-y-auto bg-white p-8 md:p-12 transition-all ${!isPreviewMode ? 'hidden' : ''}`}>
-                        <div className={`max-w-2xl mx-auto bg-white aspect-[1/1.41] shadow-2xl p-12 md:p-16 border border-[#e5e5e5] relative flex flex-col ${getLayoutClasses(currentLayout)}`}>
-                            <h1 className={`text-2xl md:text-3xl text-center mb-2 text-[#1d1d1f] font-bold uppercase tracking-wider`}>
+                    <div className={`flex-1 overflow-y-auto bg-[var(--primary-bg)] p-8 md:p-12 transition-all ${!isPreviewMode ? 'hidden' : ''}`}>
+                        <div className={`max-w-2xl mx-auto bg-white aspect-[1/1.41] shadow-2xl p-12 md:p-16 border border-[var(--border-main)] relative flex flex-col ${getLayoutClasses(currentLayout)}`}>
+                            <h1 className="text-2xl md:text-3xl text-center mb-2 text-black font-bold uppercase tracking-wider">
                                 {title || 'Untitled'}
                             </h1>
 
                             <div className="border-t-2 border-black mb-4"></div>
-                            <p className="text-sm italic text-[#48484a] mb-8 text-center md:text-left">
+                            <p className="text-sm italic text-gray-500 mb-8 text-center md:text-left">
                                 Private Transmission from {userProfile.name} | @{userProfile.handle}
                             </p>
 
@@ -346,16 +346,16 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
                     </div>
 
                     {/* Editor Container */}
-                    <div className={`flex-1 overflow-y-auto bg-white p-8 md:p-12 transition-all ${isPreviewMode ? 'hidden' : ''}`}>
+                    <div className={`flex-1 overflow-y-auto bg-[var(--primary-bg)] p-8 md:p-12 transition-all ${isPreviewMode ? 'hidden' : ''}`}>
                         <div className={`max-w-3xl mx-auto h-full flex flex-col ${getLayoutClasses(currentLayout)}`}>
-                            <div className="flex items-center gap-2 mb-6 border-b border-[#f2f2f2] pb-2 font-sans">
-                                <span className="text-[#86868b] text-lg font-medium">To: @</span>
+                            <div className="flex items-center gap-2 mb-6 border-b border-[var(--border-main)] pb-2 font-sans">
+                                <span className="text-[var(--text-secondary)] text-lg font-medium">To: @</span>
                                 <input
                                     type="text"
                                     placeholder="handle"
                                     value={recipientHandle}
                                     onChange={(e) => setRecipientHandle(e.target.value)}
-                                    className="flex-1 text-lg font-medium text-[#1d1d1f] placeholder-[#d1d1d6] border-none focus:outline-none bg-transparent"
+                                    className="flex-1 text-lg font-medium text-[var(--text-main)] placeholder-[var(--text-secondary)] border-none focus:outline-none bg-transparent"
                                     autoFocus
                                 />
                             </div>
@@ -365,9 +365,9 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
                                 placeholder="Title"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="text-4xl font-bold text-[#1d1d1f] placeholder-[#d1d1d6] w-full border-none focus:outline-none bg-transparent mb-8"
+                                className="text-4xl font-bold text-[var(--text-main)] placeholder-[var(--text-secondary)] w-full border-none focus:outline-none bg-transparent mb-8"
                             />
-                            <div className="flex-1 w-full text-lg text-[#1d1d1f] leading-relaxed relative">
+                            <div className="flex-1 w-full text-lg text-[var(--text-main)] leading-relaxed relative">
                                 {editor && (
                                     <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="bubble-menu">
                                         <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'is-active' : ''}><Bold size={16} /></button>
@@ -414,18 +414,18 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
 
                     {/* Floating Toolbar */}
                     {!isPreviewMode && (
-                        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/80 backdrop-blur-xl p-2 rounded-2xl border border-[#d1d1d6] shadow-2xl z-50">
+                        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-[var(--card-bg)]/80 backdrop-blur-xl p-2 rounded-2xl border border-[var(--border-main)] shadow-2xl z-50">
                             <button
                                 onClick={toggleLayout}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#48484a] hover:bg-[#f5f5f7] transition-all min-w-[100px] justify-center"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[var(--text-main)] hover:bg-[var(--text-main)]/[0.05] transition-all min-w-[100px] justify-center"
                             >
                                 <Layout size={16} />
                                 {getLayoutLabel(currentLayout)}
                             </button>
-                            <div className="w-[1px] h-4 bg-[#d1d1d6] mx-1"></div>
+                            <div className="w-[1px] h-4 bg-[var(--border-main)] mx-1"></div>
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-2 rounded-xl text-[#48484a] hover:bg-[#f5f5f7] flex items-center justify-center w-8 h-8"
+                                className="p-2 rounded-xl text-[var(--text-main)] hover:bg-[var(--text-main)]/[0.05] flex items-center justify-center w-8 h-8"
                                 title="Upload Image"
                             >
                                 <ImageIcon size={18} />
@@ -438,22 +438,22 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
     }
 
     return (
-        <div className="h-full flex flex-col bg-white overflow-hidden">
-            <header className="h-16 flex items-center px-8 border-b border-[#f2f2f2] shrink-0 justify-between">
+        <div className="h-full flex flex-col bg-[var(--primary-bg)] overflow-hidden text-[var(--text-main)]">
+            <header className="h-16 flex items-center px-8 border-b border-[var(--border-main)] shrink-0 justify-between bg-[var(--primary-bg)]">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 text-[#0066cc] rounded-lg">
+                    <div className="p-2 bg-[var(--accent-blue)]/[0.1] text-[var(--accent-blue)] rounded-lg">
                         <Lock size={18} />
                     </div>
-                    <h2 className="text-xl font-bold text-[#1d1d1f]">Private Lines</h2>
+                    <h2 className="text-xl font-bold text-[var(--text-main)]">Private Lines</h2>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full uppercase tracking-widest border border-green-100">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-green-500 bg-green-500/10 px-3 py-1 rounded-full uppercase tracking-widest border border-green-500/20">
                         <Shield size={12} />
                         E2E Encrypted
                     </div>
                     <button
                         onClick={() => setViewMode('compose')}
-                        className="flex items-center gap-2 bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-black/80 transition-all shadow-sm"
+                        className="flex items-center gap-2 bg-[var(--text-main)] text-[var(--card-bg)] px-4 py-1.5 rounded-full text-xs font-bold hover:opacity-90 transition-all shadow-sm"
                     >
                         <Plus size={14} />
                         New Private Line
@@ -462,17 +462,17 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
             </header>
 
             <div className="flex-1 flex overflow-hidden">
-                <div className="flex-1 overflow-y-auto bg-white p-8">
+                <div className="flex-1 overflow-y-auto bg-[var(--primary-bg)] p-8">
                     <div className="max-w-3xl mx-auto space-y-6">
                         {loading ? (
-                            <div className="flex items-center justify-center py-20 text-[#86868b] text-sm animate-pulse">
+                            <div className="flex items-center justify-center py-20 text-[var(--text-secondary)] text-sm animate-pulse">
                                 Decrypting Vault...
                             </div>
                         ) : privateDrops.length === 0 ? (
-                            <div className="text-center py-20 bg-[#fafafa] rounded-2xl border border-dashed border-[#d1d1d6]">
-                                <Lock size={48} className="mx-auto text-[#d1d1d6] mb-4" />
-                                <h3 className="text-lg font-bold text-[#1d1d1f]">Your Secure Vault</h3>
-                                <p className="text-sm text-[#86868b] mt-1">
+                            <div className="text-center py-20 bg-[var(--card-bg)] rounded-2xl border border-dashed border-[var(--border-main)]">
+                                <Lock size={48} className="mx-auto text-[var(--text-secondary)] mb-4" />
+                                <h3 className="text-lg font-bold text-[var(--text-main)]">Your Secure Vault</h3>
+                                <p className="text-sm text-[var(--text-secondary)] mt-1">
                                     Physical-only relay environment.
                                 </p>
                             </div>
@@ -484,22 +484,22 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
                                 const isAccepted = drop.status === 'accepted';
 
                                 return (
-                                    <div key={drop.id} className={`bg-white border rounded-2xl p-6 shadow-sm transition-all ${!isSender && isPending ? 'border-[#0066cc] ring-1 ring-[#0066cc]/10 shadow-lg shadow-blue-500/5' : 'border-[#f2f2f2]'} ${isDenied ? 'opacity-50' : ''}`}>
+                                    <div key={drop.id} className={`bg-[var(--card-bg)] border rounded-2xl p-6 shadow-sm transition-all ${!isSender && isPending ? 'border-[var(--accent-blue)] ring-1 ring-[var(--accent-blue)]/10 shadow-lg shadow-blue-500/5' : 'border-[var(--border-main)]'} ${isDenied ? 'opacity-50' : ''}`}>
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full overflow-hidden border border-[#f2f2f2] bg-gray-50 flex items-center justify-center">
+                                                <div className="w-10 h-10 rounded-full overflow-hidden border border-[var(--border-main)] bg-[var(--primary-bg)] flex items-center justify-center">
                                                     {drop.senderAvatar ? (
                                                         <img src={drop.senderAvatar} alt="" className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <User size={20} className="text-[#d1d1d6]" />
+                                                        <User size={20} className="text-[var(--text-secondary)]" />
                                                     )}
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-sm font-bold text-[#1d1d1f]">{drop.senderName}</span>
-                                                        <span className="text-xs text-[#86868b]">@{drop.senderHandle}</span>
+                                                        <span className="text-sm font-bold text-[var(--text-main)]">{drop.senderName}</span>
+                                                        <span className="text-xs text-[var(--text-secondary)]">@{drop.senderHandle}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-[10px] text-[#86868b] uppercase tracking-wider mt-0.5">
+                                                    <div className="flex items-center gap-2 text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mt-0.5">
                                                         <Clock size={10} />
                                                         {new Date(drop.timestamp).toLocaleString()}
                                                     </div>
@@ -510,14 +510,14 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
                                                     <div className="flex items-center gap-2">
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleDeny(drop.id); }}
-                                                            className="p-1.5 rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                                                            className="p-1.5 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
                                                             title="Deny"
                                                         >
                                                             <X size={14} />
                                                         </button>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleAcceptAndPrint(drop); }}
-                                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black text-white text-[10px] font-bold uppercase tracking-widest hover:bg-black/80 transition-colors shadow-sm"
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--text-main)] text-[var(--card-bg)] text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-colors shadow-sm"
                                                         >
                                                             <Printer size={12} />
                                                             Accept & Print
@@ -528,7 +528,7 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
                                                 {isAccepted && !isSender && (
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleAcceptAndPrint(drop); }}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f5f5f7] text-[#48484a] text-[10px] font-bold uppercase tracking-widest hover:bg-[#ebebeb] transition-colors"
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--text-main)]/[0.05] text-[var(--text-main)] text-[10px] font-bold uppercase tracking-widest hover:bg-[var(--text-main)]/[0.1] transition-colors"
                                                     >
                                                         <Printer size={12} />
                                                         Print Again
@@ -549,12 +549,12 @@ export const PrivateDropsView: React.FC<PrivateDropsViewProps> = ({ userProfile,
 
                                         {/* Status Views */}
                                         {isPending && !isSender ? (
-                                            <div className="bg-[#fafafa] rounded-2xl p-8 border border-dashed border-[#d1d1d6] flex flex-col items-center justify-center text-center">
-                                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-[#f2f2f2] mb-4">
-                                                    <Lock size={20} className="text-[#86868b]" />
+                                            <div className="bg-[var(--primary-bg)] rounded-2xl p-8 border border-dashed border-[var(--border-main)] flex flex-col items-center justify-center text-center">
+                                                <div className="w-12 h-12 bg-[var(--card-bg)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-main)] mb-4">
+                                                    <Lock size={20} className="text-[var(--text-secondary)]" />
                                                 </div>
-                                                <h4 className="text-sm font-bold text-[#1d1d1f] mb-1">Encrypted Transmission</h4>
-                                                <p className="text-xs text-[#86868b] max-w-[240px] leading-relaxed">
+                                                <h4 className="text-sm font-bold text-[var(--text-main)] mb-1">Encrypted Transmission</h4>
+                                                <p className="text-xs text-[var(--text-secondary)] max-w-[240px] leading-relaxed">
                                                     {drop.senderName} is sending you a private line. Accept to print it to paper. Digital preview is disabled for this secure relay.
                                                 </p>
                                             </div>

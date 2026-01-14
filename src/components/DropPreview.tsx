@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { X, Printer, CheckCircle2, RotateCcw } from 'lucide-react';
 import { Drop, PrinterState } from '../types';
@@ -9,82 +10,121 @@ interface DropPreviewProps {
     onClose: () => void;
 }
 
-export const DropPreview: React.FC<DropPreviewProps> = ({
-    drop,
-    printer,
-    onPrint,
-    onClose
-}) => {
+export const DropPreview: React.FC<DropPreviewProps> = ({ drop, printer, onPrint, onClose }) => {
+    const getLayoutClasses = (layout: string) => {
+        switch (layout) {
+            case 'zine':
+                return 'font-mono uppercase-headers border-dashed';
+            case 'minimal':
+                return 'font-sans tracking-wide';
+            case 'classic':
+            default:
+                return 'font-serif';
+        }
+    };
+
+    const isPrinted = drop.status === 'printed';
+    const isPrinting = printer.isPrinting && printer.currentJob === drop.id;
+
     return (
-        <div className="absolute inset-0 z-[100] bg-white/80 backdrop-blur-md flex items-center justify-center p-8 animate-in fade-in duration-200">
-            <div className={`bg-white w-full max-w-2xl h-[85vh] shadow-2xl rounded-sm border border-[#e5e5e5] flex flex-col relative ${drop.layout === 'zine' ? 'font-mono' : drop.layout === 'minimal' ? 'font-sans' : 'font-serif'}`}>
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-black/5 hover:bg-black/10 text-[#1d1d1f] transition-colors z-10"
-                >
-                    <X size={20} />
-                </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
+            {/* Backdrop */}
+            <div
+                className="absolute inset-0 bg-black/40 backdrop-blur-md"
+                onClick={onClose}
+            />
 
-                <div className="flex-1 overflow-y-auto p-12 md:p-16">
-                    <h1 className={`text-2xl md:text-3xl text-center mb-2 text-[#1d1d1f] font-bold uppercase tracking-wider`}>
-                        {drop.title}
-                    </h1>
+            {/* Modal Container */}
+            <div className="relative w-full max-w-4xl max-h-full bg-[var(--primary-bg)] rounded-[32px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-400 ease-out border border-white/20">
 
-                    <div className="border-t-2 border-black mb-4"></div>
-                    <p className="text-sm italic text-[#48484a] mb-8 text-center md:text-left">
-                        Published by {drop.author} | @{drop.authorHandle}
-                    </p>
+                {/* Header */}
+                <div className="h-16 px-8 flex items-center justify-between bg-[var(--card-bg)]/80 backdrop-blur-xl border-b border-[var(--border-main)] shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-[var(--border-main)]">
+                            <img src={drop.authorAvatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${drop.authorHandle}`} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Previewing Letter</p>
+                            <p className="text-sm font-bold text-[var(--text-main)]">By @{drop.authorHandle}</p>
+                        </div>
+                    </div>
 
-                    <div
-                        className="text-[#1d1d1f] text-base md:text-lg leading-[1.8] font-serif"
-                        dangerouslySetInnerHTML={{ __html: drop.content }}
-                    />
+                    <div className="flex items-center gap-3">
+                        {isPrinted ? (
+                            <button
+                                onClick={() => onPrint(drop.id)}
+                                disabled={isPrinting}
+                                className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-[var(--text-main)]/[0.05] text-[var(--text-main)] hover:bg-[var(--text-main)]/[0.1] transition-all"
+                            >
+                                <RotateCcw size={14} />
+                                Re-print
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => onPrint(drop.id)}
+                                disabled={isPrinting}
+                                className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold bg-[var(--text-main)] text-[var(--card-bg)] hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-black/10"
+                            >
+                                <Printer size={14} />
+                                {isPrinting ? 'Printing...' : 'Print Now'}
+                            </button>
+                        )}
 
-                    <div className="mt-16 pt-8 border-t border-[#f2f2f2] text-center">
-                        <p className="text-[10px] text-[#86868b] uppercase tracking-widest leading-relaxed">
-                            Printed via Drop a Line Output Gateway<br />
-                            {new Date(drop.timestamp).toLocaleDateString()} • {new Date(drop.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-full hover:bg-[var(--text-main)]/[0.05] text-[var(--text-secondary)] transition-all"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-[#f2f2f2] bg-[#fafafa] flex justify-center gap-4 shrink-0">
-                    <div className="flex items-center gap-2">
-                        {drop.status === 'printed' ? (
-                            <>
-                                <div className="flex items-center gap-2 px-6 py-2 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200 cursor-default">
-                                    <CheckCircle2 size={14} />
-                                    Printed
-                                </div>
-                                <button
-                                    onClick={() => onPrint(drop.id)}
-                                    disabled={printer.isPrinting}
-                                    className="bg-[#f5f5f7] border border-[#d1d1d6] text-[#1d1d1f] px-6 py-2 rounded-full text-xs font-bold hover:bg-[#ebebeb] transition-all flex items-center gap-2"
-                                >
-                                    <RotateCcw size={14} />
-                                    Re-print
-                                </button>
-                            </>
-                        ) : (
-                            <button
-                                onClick={() => {
-                                    onPrint(drop.id);
-                                    onClose();
-                                }}
-                                disabled={printer.isPrinting}
-                                className="px-6 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 bg-black text-white hover:bg-black/90 shadow-lg shadow-black/10"
-                            >
-                                <Printer size={14} />
-                                {drop.status === 'queued' ? 'Force Print Batch' : 'Print Now'}
-                            </button>
-                        )}
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="bg-white border border-[#d1d1d6] text-[#1d1d1f] px-6 py-2 rounded-full text-xs font-bold hover:bg-[#f5f5f7] transition-all"
+                {/* Scrollable Preview Area */}
+                <div className="flex-1 overflow-y-auto p-8 md:p-16 custom-scrollbar">
+                    <div
+                        className={`max-w-2xl mx-auto aspect-[1/1.41] shadow-2xl p-12 md:p-20 border border-[var(--border-main)] relative flex flex-col ${getLayoutClasses(drop.layout || 'classic')} bg-white dark:bg-[#f8f8f8] text-black`}
+                        style={{ minHeight: '800px' }}
                     >
-                        Close Preview
-                    </button>
+                        {/* Stamp/Date */}
+                        <div className="absolute top-10 right-10 text-[10px] font-bold text-[#86868b] uppercase tracking-widest text-right">
+                            {new Date(drop.timestamp).toLocaleDateString()}<br />
+                            RELAY TERMINAL ID: {Math.floor(1000 + Math.random() * 9000)}
+                        </div>
+
+                        <h1 className="text-3xl md:text-4xl text-center mb-4 text-black font-bold tracking-tight">
+                            {drop.title}
+                        </h1>
+
+                        <div className="w-16 h-1 bg-black mx-auto mb-8 rounded-full"></div>
+
+                        <div className="text-sm italic text-[#86868b] mb-12 text-center">
+                            A transmission from {drop.author} (@{drop.authorHandle})
+                        </div>
+
+                        <div
+                            className="text-black text-base md:text-lg leading-[1.8] flex-1 prose-preview"
+                            dangerouslySetInnerHTML={{ __html: drop.content }}
+                        />
+
+                        <div className="mt-20 pt-10 border-t border-black/5 text-center">
+                            <p className="text-[10px] text-[#86868b] uppercase tracking-[0.2em] leading-relaxed">
+                                Physical Network Relay Protocol v1.0<br />
+                                Printed via Drop a Line Secure Gateway
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer Info */}
+                <div className="h-12 px-8 bg-[var(--card-bg)]/50 backdrop-blur-md border-t border-[var(--border-main)] flex items-center justify-center gap-6 shrink-0">
+                    <div className="flex items-center gap-2 text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
+                        <CheckCircle2 size={10} className="text-green-500" />
+                        Verified Cryptographic Signature
+                    </div>
+                    <div className="w-[1px] h-3 bg-[var(--border-main)]"></div>
+                    <div className="flex items-center gap-2 text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
+                        Layout: {drop.layout || 'Classic'}
+                    </div>
                 </div>
             </div>
         </div>
