@@ -49,7 +49,7 @@ export const AuthView: React.FC = () => {
       <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl border border-[#d1d1d6]">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-[#1d1d1f]">DropaLine</h1>
-          <p className="text-sm text-[#86868b] mt-2">The physical internet for writers.</p>
+          <p className="text-sm text-[#86868b] mt-2">The physical internet for writers and readers.</p>
         </div>
 
         {error && (
