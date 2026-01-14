@@ -53,7 +53,7 @@ export const AuthView: React.FC = () => {
             <img src={logo} alt="Drop a Line Logo" className="w-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-[#1d1d1f]">Drop a Line</h1>
-          <p className="text-sm text-[#86868b] mt-2">The physical internet for writers and readers.</p>
+          <p className="text-sm text-[#86868b] mt-2">Writers’ words. Readers’ paper.</p>
         </div>
 
         {error && (

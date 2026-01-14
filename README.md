@@ -2,12 +2,12 @@
   <img width="1200" alt="Drop a Line Header" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
   
   # 📮 DROP A LINE
-  ### From your screen to their paper.
+  ### Writers’ words. Readers’ paper.
   
   [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
   [![Platform: Cross-Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-black.svg)]()
 
-  **Drop a Line** is a quiet space for writers and readers who still believe in the magic of ink and paper. It’s a simple way to send your words directly to the printers of those who follow you.
+  **Drop a Line** is a quiet space for writers and readers who still believe in the magic of ink and paper. It’s a direct bridge between a writer’s screen and a reader’s hands, turning digital thoughts into physical keepsakes.
 </div>
 
 ---
