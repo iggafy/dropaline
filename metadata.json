@@ -1,0 +1,8 @@
+{
+  "name": "DropaLine",
+  "description": "The physical internet for writers and readers. A secure, cloud-connected platform where indie creators 'drop' content directly to subscribers' printers.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
