@@ -29,7 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
       {/* User Profile Snippet */}
       <div className="flex items-center gap-3 px-2 mb-8 mt-2">
         <div className="w-9 h-9 rounded-lg overflow-hidden border border-[#d1d1d6] shadow-sm bg-white flex items-center justify-center p-1.5">
-          <img src="/logo.png" alt="Logo" className="w-full object-contain" />
+          <img src="./logo.png" alt="Logo" className="w-full object-contain" />
         </div>
         <div className="flex flex-col">
           <h1 className="text-sm font-bold text-[#1d1d1f] leading-tight">Drop a Line</h1>

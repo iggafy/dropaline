@@ -15,7 +15,7 @@ ipcMain.handle('get-printers', async () => {
 
 ipcMain.on('print-document', (event, { html, printerName }) => {
   let printWindow = new BrowserWindow({ show: false });
-  printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURI(html)}`);
+  printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
 
   printWindow.webContents.on('did-finish-load', () => {
     printWindow.webContents.print({
@@ -37,7 +37,7 @@ ipcMain.handle('print-to-pdf', async (event, { html, filename }) => {
     win.setTitle(filename || 'Drop a Line');
   });
 
-  await win.loadURL(`data:text/html;charset=utf-8,${encodeURI(html)}`);
+  await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
   const data = await win.webContents.printToPDF({
     printBackground: true,
     pageSize: 'A4',

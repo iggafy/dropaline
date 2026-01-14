@@ -177,7 +177,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="bg-white p-6 rounded-2xl border border-[#e5e5e5] shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <p className="text-sm font-semibold text-[#1d1d1f]">{printer.name || 'No printer selected'}</p>
+                  <p className="text-sm font-semibold text-[#1d1d1f]">
+                    {printer.name === 'SAVE_AS_PDF' ? 'Digital Output' : (printer.name || 'No printer selected')}
+                  </p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`w-1.5 h-1.5 rounded-full ${printer.isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
                     <p className="text-xs text-[#86868b]">{printer.isConnected ? 'Ready to print' : 'Offline'}</p>
@@ -333,7 +335,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div>
                 <h4 className="text-xs font-bold text-[#0066cc] mb-1">Secure Relay Active</h4>
                 <p className="text-[11px] text-[#0066cc]/80 leading-relaxed font-medium">
-                  Your physical location and IP are hidden behind the Drop a Line bridge. Only your followed network can transmit data packets to your hardware gateway.
+                  Your location and personal details are hidden. Only people you follow can send messages to your printer.
                 </p>
               </div>
             </div>
@@ -349,7 +351,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               Log Out
             </button>
             <p className="text-[10px] text-center text-[#86868b] mt-4 uppercase tracking-[0.2em]">
-              Relay Terminal v1.0.0
+              DROP A LINE V1.0.0
             </p>
           </section>
         </div>

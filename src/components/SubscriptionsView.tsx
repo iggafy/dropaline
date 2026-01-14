@@ -150,13 +150,13 @@ const CreatorCard: React.FC<{ creator: Creator; onToggle: () => void; onToggleAu
         )}
       </div>
       <div>
-        <h4 className="text-base font-bold text-[#1d1d1f] flex items-center gap-2">
+        <h4 className="text-base font-bold text-[#1d1d1f] flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
           {creator.name}
-          <span className="text-xs font-medium text-[#0066cc] bg-[#f0f7ff] px-1.5 py-0.5 rounded-md">
+          <span className="text-xs font-medium text-[#0066cc] bg-[#f0f7ff] px-1.5 py-0.5 rounded-md w-fit">
             @{creator.handle}
           </span>
         </h4>
-        <p className="text-xs text-[#48484a] mt-1 line-clamp-1 max-w-[200px] sm:max-w-xs">{creator.bio}</p>
+        <p className="text-xs text-[#48484a] mt-1 line-clamp-2 max-w-[200px] sm:max-w-xs">{creator.bio}</p>
         <div className="flex items-center gap-3 mt-2">
           <span className="text-[10px] font-medium text-[#86868b]">{creator.followerCount.toLocaleString()} followers</span>
         </div>

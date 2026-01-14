@@ -132,7 +132,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                   onClick={() => onPrint(drop.id)}
                   disabled={drop.status === 'printed' || drop.status === 'queued' || printer.isPrinting}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all ${drop.status === 'printed'
-                    ? 'bg-[#f5f5f7] text-[#86868b] cursor-not-allowed'
+                    ? 'bg-green-100 text-green-700 cursor-not-allowed border border-green-200'
                     : drop.status === 'queued'
                       ? 'bg-[#f5f5f7] text-orange-600/70 cursor-not-allowed'
                       : paperSaver

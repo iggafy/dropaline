@@ -62,9 +62,22 @@ const App: React.FC = () => {
     if ((window as any).electron) {
       (window as any).electron.getPrinters().then((list: any[]) => {
         setAvailablePrinters(list);
-        const defaultPrinter = list.find(p => p.isDefault) || list[0];
-        if (defaultPrinter) {
-          setPrinter(prev => ({ ...prev, name: defaultPrinter.name }));
+
+        // Try to load persisted printer
+        const savedPrinterName = localStorage.getItem('dropaline_printer_name');
+        let printerToSet = list.find(p => p.isDefault) || list[0];
+
+        if (savedPrinterName) {
+          if (savedPrinterName === 'SAVE_AS_PDF') {
+            printerToSet = { name: 'SAVE_AS_PDF' };
+          } else {
+            const found = list.find(p => p.name === savedPrinterName);
+            if (found) printerToSet = found;
+          }
+        }
+
+        if (printerToSet) {
+          setPrinter(prev => ({ ...prev, name: printerToSet.name, isConnected: true }));
         }
       });
     }
@@ -107,6 +120,13 @@ const App: React.FC = () => {
       };
     }
   }, [session]);
+
+  // Save Printer Preference
+  useEffect(() => {
+    if (printer.name && printer.name !== 'Searching for Printers...') {
+      localStorage.setItem('dropaline_printer_name', printer.name);
+    }
+  }, [printer.name]);
 
   // --- Auto-Batch Release Engine ---
   useEffect(() => {
@@ -218,7 +238,7 @@ const App: React.FC = () => {
     }
 
     // 3. Fetch Transmissions
-    const authorsToFetch = subIds;
+    const authorsToFetch = [...subIds, session.user.id];
 
     const { data: dropsData } = await supabase
       .from('drops')
