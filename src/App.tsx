@@ -56,7 +56,6 @@ const App: React.FC = () => {
   const [customDate, setCustomDate] = useState<string>('');
   const [customTime, setCustomTime] = useState<string>('');
   const [editingDraft, setEditingDraft] = useState<Draft | null>(null);
-  const [showAuth, setShowAuth] = useState(false);
   const autoPrintProcessedIds = useRef<Set<string>>(new Set());
 
   // --- Auth & Init ---
@@ -1009,9 +1008,9 @@ const App: React.FC = () => {
   if (!session) {
     const isElectron = !!(window as any).electron;
 
-    // If on web and haven't clicked "Enter App", show landing page
-    if (!isElectron && !showAuth) {
-      return <LandingView onEnterApp={() => setShowAuth(true)} />;
+    // If on web, strictly show the landing page only
+    if (!isElectron) {
+      return <LandingView />;
     }
 
     return <AuthView />;

@@ -1,14 +1,10 @@
 
 import React from 'react';
-import { Download, Monitor, Mail, Printer, Heart, ArrowRight, Github, Globe, Smartphone, Feather } from 'lucide-react';
+import { Download, Monitor, Mail, Printer, Heart, Github, Globe, Feather, ShieldCheck } from 'lucide-react';
 import logo from '../assets/logo.png';
 
-interface LandingViewProps {
-    onEnterApp: () => void;
-}
-
-export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
-    const latestVersion = "1.0.6";
+export const LandingView: React.FC = () => {
+    const latestVersion = "1.0.7";
     const githubRepo = "https://github.com/iggafy/dropaline";
 
     const downloadLinks = {
@@ -29,12 +25,12 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
                 <div className="flex items-center gap-6">
                     <a href="#features" className="text-sm font-medium text-[#86868b] hover:text-black transition-colors">Features</a>
                     <a href="#download" className="text-sm font-medium text-[#86868b] hover:text-black transition-colors">Download</a>
-                    <button
-                        onClick={onEnterApp}
-                        className="bg-black text-white px-5 py-2 rounded-full text-sm font-bold hover:opacity-90 transition-all flex items-center gap-2 group shadow-lg shadow-black/10"
+                    <a
+                        href="#download"
+                        className="bg-black text-white px-5 py-2 rounded-full text-sm font-bold hover:opacity-90 transition-all shadow-lg shadow-black/10"
                     >
-                        Launch Web <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-                    </button>
+                        Get the App
+                    </a>
                 </div>
             </nav>
 
@@ -42,7 +38,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
             <section className="pt-32 pb-20 px-6 container mx-auto max-w-6xl text-center">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-black/[0.03] border border-black/[0.05] rounded-full text-[11px] font-bold uppercase tracking-widest text-[#86868b] mb-8 animate-in fade-in slide-in-from-bottom-2">
                     <span className="flex h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                    Now Live: Edition v{latestVersion}
+                    Version {latestVersion} Now Available
                 </div>
                 <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-700">
                     Writers’ words.<br />
@@ -50,22 +46,19 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
                 </h1>
                 <p className="text-lg md:text-xl text-[#86868b] max-w-2xl mx-auto mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-6 duration-1000">
                     Drop a Line is a quiet space for those who still believe in the magic of ink and paper.
-                    A direct line from a writer’s screen to a reader’s hands.
+                    A direct line between a writer’s screen and a reader’s hands.
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+                <div className="flex flex-col sm:row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
                     <a
                         href="#download"
-                        className="w-full sm:w-auto bg-black text-white px-8 py-4 rounded-2xl text-lg font-bold hover:opacity-90 transition-all flex items-center justify-center gap-3 shadow-xl shadow-black/20"
+                        className="w-full sm:w-auto bg-black text-white px-10 py-5 rounded-2xl text-lg font-bold hover:opacity-90 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                     >
-                        <Download size={20} /> Get Desktop App
+                        <Download size={22} /> Download for Desktop
                     </a>
-                    <button
-                        onClick={onEnterApp}
-                        className="w-full sm:w-auto bg-white text-black border border-black/10 px-8 py-4 rounded-2xl text-lg font-bold hover:bg-[#f5f5f7] transition-all"
-                    >
-                        Open Web Version
-                    </button>
+                    <p className="text-xs text-[#86868b] font-medium uppercase tracking-widest mt-2 sm:mt-0">
+                        Available on Windows, macOS, and Linux
+                    </p>
                 </div>
 
                 {/* Hero Image / Mockup */}
@@ -85,6 +78,20 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
                             <p className="text-xs text-[#86868b]">Connected: Thermal Relay 01</p>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            {/* Why Desktop section */}
+            <section className="py-24 bg-[#f5f5f7] px-6">
+                <div className="container mx-auto max-w-4xl text-center">
+                    <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-8 text-[#0071e3]">
+                        <ShieldCheck size={32} />
+                    </div>
+                    <h2 className="text-3xl font-bold mb-6">Designed for real printers.</h2>
+                    <p className="text-[#86868b] text-lg leading-relaxed">
+                        To provide a seamless connection to your hardware, Drop a Line lives exclusively as a desktop application.
+                        This allows for instant, background printing and a focused, distraction-free writing environment that the web cannot provide.
+                    </p>
                 </div>
             </section>
 
@@ -126,25 +133,25 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
                             <div className="space-y-6 pt-12">
                                 <div className="bg-[#f5f5f7] p-8 rounded-[2rem] aspect-square flex flex-col justify-end">
                                     <Monitor size={32} className="mb-4 text-black" />
-                                    <h3 className="font-bold">Desktop App</h3>
-                                    <p className="text-xs text-[#86868b]">Native & Offline</p>
+                                    <h3 className="font-bold">Windows</h3>
+                                    <p className="text-xs text-[#86868b]">Native App</p>
                                 </div>
                                 <div className="bg-[#fafafa] border border-black/5 p-8 rounded-[2rem] aspect-square flex flex-col justify-end">
-                                    <Mail size={32} className="mb-4 text-[#86868b]" />
-                                    <h3 className="font-bold">Private Lines</h3>
-                                    <p className="text-xs text-[#86868b]">Direct letters</p>
+                                    <Github size={32} className="mb-4 text-[#86868b]" />
+                                    <h3 className="font-bold">macOS</h3>
+                                    <p className="text-xs text-[#86868b]">Apple Silicon</p>
                                 </div>
                             </div>
                             <div className="space-y-6">
                                 <div className="bg-[#fafafa] border border-black/5 p-8 rounded-[2rem] aspect-square flex flex-col justify-end">
                                     <Globe size={32} className="mb-4 text-[#86868b]" />
-                                    <h3 className="font-bold">The Network</h3>
-                                    <p className="text-xs text-[#86868b]">Global relay</p>
+                                    <h3 className="font-bold">Linux</h3>
+                                    <p className="text-xs text-[#86868b]">AppImage & Deb</p>
                                 </div>
                                 <div className="bg-black text-white p-8 rounded-[2rem] aspect-square flex flex-col justify-end shadow-2xl">
-                                    <Smartphone size={32} className="mb-4 text-white" />
-                                    <h3 className="font-bold">Web Version</h3>
-                                    <p className="text-xs text-white/60">Accessible anywhere</p>
+                                    <Mail size={32} className="mb-4 text-white" />
+                                    <h3 className="font-bold">Private Lines</h3>
+                                    <p className="text-xs text-white/60">Direct letters</p>
                                 </div>
                             </div>
                         </div>
@@ -159,7 +166,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
                     <div className="relative z-10">
                         <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Ready to receive your first drop?</h2>
                         <p className="text-white/60 text-lg mb-12 max-w-xl mx-auto font-medium">
-                            Join the quiet network. Select your platform below to download the latest edition of Drop a Line.
+                            Join the quiet network. Select your platform below to download the official Drop a Line desktop application.
                         </p>
 
                         <div className="grid sm:grid-cols-3 gap-6 mb-12">
@@ -169,7 +176,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
                                 </div>
                                 <div className="text-center">
                                     <p className="font-bold">Windows</p>
-                                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">v{latestVersion}</p>
+                                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Download .exe</p>
                                 </div>
                             </a>
                             <a href={downloadLinks.mac} className="p-6 bg-white/10 hover:bg-white/20 rounded-[2rem] border border-white/10 transition-all flex flex-col items-center gap-4 group">
@@ -178,7 +185,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
                                 </div>
                                 <div className="text-center">
                                     <p className="font-bold">macOS</p>
-                                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">v{latestVersion}</p>
+                                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Download .dmg</p>
                                 </div>
                             </a>
                             <a href={downloadLinks.linux} className="p-6 bg-white/10 hover:bg-white/20 rounded-[2rem] border border-white/10 transition-all flex flex-col items-center gap-4 group">
@@ -187,14 +194,14 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
                                 </div>
                                 <div className="text-center">
                                     <p className="font-bold">Linux</p>
-                                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">v{latestVersion}</p>
+                                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Download .AppImage</p>
                                 </div>
                             </a>
                         </div>
 
                         <div className="text-sm text-white/40 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
                             <p>Indie Developer Signed (Unsigned binaries)</p>
-                            <a href={downloadLinks.releases} className="text-white hover:underline">View Source & Build History</a>
+                            <a href={downloadLinks.releases} className="text-white hover:underline">View All Releases</a>
                         </div>
                     </div>
                 </div>
