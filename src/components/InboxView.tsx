@@ -1,7 +1,7 @@
-
-import React, { useState } from 'react';
-import { Printer, CheckCircle2, Clock, MoreHorizontal, Layout, Inbox, Heart, MessageCircle, Eye, X, Send, Hourglass, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Printer, CheckCircle2, Clock, Eye, X, Send, Hourglass, RotateCcw, Heart, MessageCircle, Inbox } from 'lucide-react';
 import { Drop, PrinterState } from '../types';
+import { CommentItem } from './CommentItem';
 
 interface InboxViewProps {
   drops: Drop[];
@@ -9,7 +9,8 @@ interface InboxViewProps {
   doubleSided: boolean;
   onPrint: (id: string) => void;
   onLike: (id: string) => void;
-  onAddComment: (id: string, text: string) => void;
+  onAddComment: (id: string, text: string, parentId?: string) => void;
+  onLikeComment: (dropId: string, commentId: string) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
 }
@@ -21,12 +22,34 @@ export const InboxView: React.FC<InboxViewProps> = ({
   onPrint,
   onLike,
   onAddComment,
+  onLikeComment,
   onLoadMore,
   hasMore
 }) => {
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
   const [expandedCommentsId, setExpandedCommentsId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [activeParentId, setActiveParentId] = useState<string | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasMore || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 1.0, rootMargin: '100px' }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, onLoadMore]);
 
   const handlePreview = (drop: Drop) => {
     setSelectedDrop(drop);
@@ -40,16 +63,24 @@ export const InboxView: React.FC<InboxViewProps> = ({
     if (expandedCommentsId === id) {
       setExpandedCommentsId(null);
       setReplyText('');
+      setActiveParentId(null);
     } else {
       setExpandedCommentsId(id);
       setReplyText('');
+      setActiveParentId(null);
     }
+  };
+
+  const handleCommentReply = (handle: string, commentId: string) => {
+    setReplyText(`@${handle} `);
+    setActiveParentId(commentId);
   };
 
   const handleSendComment = (id: string) => {
     if (replyText.trim()) {
-      onAddComment(id, replyText);
+      onAddComment(id, replyText, activeParentId || undefined);
       setReplyText('');
+      setActiveParentId(null);
     }
   };
 
@@ -74,7 +105,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
       </header>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-8 space-y-6">
+      <div className={`flex-1 overflow-y-auto p-8 ${drops.length > 0 ? 'space-y-6' : 'flex flex-col'}`}>
         {drops.map((drop) => (
           <div
             key={drop.id}
@@ -143,11 +174,11 @@ export const InboxView: React.FC<InboxViewProps> = ({
                 ) : (
                   <button
                     onClick={() => onPrint(drop.id)}
-                    disabled={drop.status === 'queued' || printer.isPrinting}
+                    disabled={printer.isPrinting}
                     className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all bg-black text-white hover:bg-black/90 active:scale-95 shadow-lg shadow-black/10"
                   >
                     <Printer size={14} />
-                    {drop.status === 'queued' ? 'In Queue' : 'Print'}
+                    {drop.status === 'queued' ? 'Print Now' : 'Print'}
                   </button>
                 )}
                 <button
@@ -184,21 +215,18 @@ export const InboxView: React.FC<InboxViewProps> = ({
               <div className="mt-4 pt-4 border-t border-[#f2f2f2] animate-in fade-in slide-in-from-top-2">
                 <div className="space-y-3 mb-4 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                   {drop.commentList && drop.commentList.length > 0 ? (
-                    drop.commentList.map((comment) => (
-                      <div key={comment.id} className="flex gap-2 items-start">
-                        <div className="w-6 h-6 rounded-full shrink-0 overflow-hidden border border-[#d1d1d6]">
-                          <img
-                            src={comment.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${comment.authorHandle}`}
-                            alt="Avatar"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="p-2.5 rounded-r-xl rounded-bl-xl text-xs text-[#1d1d1f] bg-[#f5f5f7]">
-                          <span className="font-bold mr-1 block sm:inline">@{comment.authorHandle}</span>
-                          <span>{comment.text}</span>
-                        </div>
-                      </div>
-                    ))
+                    drop.commentList
+                      .filter(comment => !comment.parentId) // Only root level comments
+                      .map((comment) => (
+                        <CommentItem
+                          key={comment.id}
+                          comment={comment}
+                          allComments={drop.commentList || []}
+                          dropId={drop.id}
+                          onReply={handleCommentReply}
+                          onLike={onLikeComment}
+                        />
+                      ))
                   ) : (
                     <div className="text-center py-4 text-xs text-[#86868b] italic">
                       No comments yet. Be the first to drop a line.
@@ -207,45 +235,62 @@ export const InboxView: React.FC<InboxViewProps> = ({
                 </div>
 
                 <div className="relative">
-                  <input
-                    type="text"
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, drop.id)}
-                    placeholder="Write a reply..."
-                    className="w-full border rounded-full py-2 pl-4 pr-10 text-xs focus:outline-none transition-colors bg-white border-[#e5e5e5] focus:border-[#d1d1d6]"
-                  />
-                  <button
-                    onClick={() => handleSendComment(drop.id)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 hover:text-[#004499] disabled:opacity-30 text-[#0066cc]"
-                    disabled={!replyText.trim()}
-                  >
-                    <Send size={14} />
-                  </button>
+                  {activeParentId && (
+                    <div className="flex items-center justify-between mb-2 px-3 py-1.5 bg-[#f0f7ff] rounded-lg border border-[#0066cc]/20">
+                      <span className="text-[10px] font-bold text-[#0066cc] uppercase tracking-wider">Replying to message</span>
+                      <button
+                        onClick={() => {
+                          setActiveParentId(null);
+                          setReplyText('');
+                        }}
+                        className="text-[10px] font-bold text-[#86868b] hover:text-[#1d1d1f]"
+                      >Cancel</button>
+                    </div>
+                  )}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, drop.id)}
+                      placeholder="Write a reply..."
+                      className="w-full border rounded-full py-2 pl-4 pr-10 text-xs focus:outline-none transition-colors bg-white border-[#e5e5e5] focus:border-[#d1d1d6]"
+                    />
+                    <button
+                      onClick={() => handleSendComment(drop.id)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 hover:text-[#004499] disabled:opacity-30 text-[#0066cc]"
+                      disabled={!replyText.trim()}
+                    >
+                      <Send size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         ))}
 
-        {hasMore && (
-          <div className="flex justify-center pt-4 pb-12">
-            <button
-              onClick={onLoadMore}
-              className="px-8 py-3 bg-[#f5f5f7] hover:bg-[#ebebeb] text-[#48484a] rounded-full text-sm font-bold transition-all border border-[#d1d1d6]/50 shadow-sm"
-            >
-              Load more transmissions
-            </button>
+        {drops.length > 0 && (
+          <div ref={loadMoreRef} className="h-24 flex items-center justify-center">
+            {hasMore ? (
+              <div className="h-1.5 w-1.5 rounded-full bg-[#d1d1d6] opacity-50"></div>
+            ) : (
+              <div className="flex flex-col items-center gap-2 opacity-30">
+                <div className="w-16 h-[1px] bg-[#d1d1d6]"></div>
+                <span className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest">End of Relay</span>
+                <div className="w-16 h-[1px] bg-[#d1d1d6]"></div>
+              </div>
+            )}
           </div>
         )}
 
         {drops.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-center pt-20">
-            <div className="w-16 h-16 bg-[#f5f5f7] rounded-full flex items-center justify-center text-[#86868b] mb-4">
-              <Inbox size={32} />
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+            <div className="w-20 h-20 bg-[#f5f5f7] rounded-3xl flex items-center justify-center text-[#d1d1d6] mb-6 border border-[#f2f2f2] shadow-sm">
+              <Inbox size={40} />
             </div>
-            <h3 className="text-lg font-medium text-[#1d1d1f]">Your inbox is quiet</h3>
-            <p className="text-[#86868b] text-sm mt-1">New drops from writers you follow will appear here.</p>
+            <h3 className="text-xl font-bold text-[#1d1d1f]">Your inbox is quiet</h3>
+            <p className="text-[#86868b] text-sm mt-2 max-w-[280px]">New transmissions from writers you follow will appear here as they are relayed.</p>
           </div>
         )}
       </div>

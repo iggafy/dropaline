@@ -11,6 +11,7 @@ import {
     BarChart
 } from 'lucide-react';
 import { Drop, Comment } from '../types';
+import { CommentItem } from './CommentItem';
 
 interface MyDropsViewProps {
     drops: Drop[];
@@ -18,58 +19,6 @@ interface MyDropsViewProps {
     onLikeComment: (dropId: string, commentId: string) => void;
 }
 
-interface CommentItemProps {
-    comment: Comment;
-    dropId: string;
-    onReply: (handle: string, id: string) => void;
-    onLike: (dropId: string, commentId: string) => void;
-}
-
-const CommentItem: React.FC<CommentItemProps> = ({ comment, dropId, onReply, onLike }) => {
-    const isReply = comment.text.trim().startsWith('@');
-
-    return (
-        <div className={`flex flex-col gap-2 ${isReply ? 'ml-8' : ''}`}>
-            <div className="bg-white p-4 rounded-2xl border border-[#e5e5e5] shadow-sm hover:shadow-md transition-shadow group">
-                <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full overflow-hidden border border-[#e5e5e5]">
-                            <img
-                                src={comment.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${comment.authorHandle}`}
-                                alt="Avatar"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <span className="text-xs font-bold text-[#0066cc]">@{comment.authorHandle}</span>
-                    </div>
-                    <span className="text-[10px] text-[#86868b]">{new Date(comment.timestamp).toLocaleDateString()}</span>
-                </div>
-
-                <p className="text-sm text-[#48484a] leading-relaxed mb-3">
-                    {comment.text}
-                </p>
-
-                <div className="flex items-center gap-4 border-t border-[#f2f2f2] pt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                        onClick={() => onReply(comment.authorHandle, comment.id)}
-                        className="flex items-center gap-1.5 text-[10px] font-bold text-[#86868b] hover:text-[#0066cc] uppercase tracking-wider"
-                    >
-                        <Send size={10} />
-                        Reply
-                    </button>
-                    <button
-                        onClick={() => onLike(dropId, comment.id)}
-                        className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${comment.liked ? 'text-red-500' : 'text-[#86868b] hover:text-red-500'}`}
-                    >
-                        <Heart size={10} className={comment.liked ? 'fill-current' : ''} />
-                        {comment.liked ? 'Liked' : 'Like'}
-                        {comment.likes > 0 && <span className="ml-1 opacity-60">({comment.likes})</span>}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply, onLikeComment }) => {
     const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
@@ -184,15 +133,18 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply, onLike
                             {/* Comments Section */}
                             <div className="space-y-4">
                                 {selectedDrop.commentList && selectedDrop.commentList.length > 0 ? (
-                                    selectedDrop.commentList.map((comment) => (
-                                        <CommentItem
-                                            key={comment.id}
-                                            comment={comment}
-                                            dropId={selectedDrop.id}
-                                            onReply={handleCommentReply}
-                                            onLike={onLikeComment}
-                                        />
-                                    ))
+                                    selectedDrop.commentList
+                                        .filter(comment => !comment.parentId) // Only root level comments
+                                        .map((comment) => (
+                                            <CommentItem
+                                                key={comment.id}
+                                                comment={comment}
+                                                allComments={selectedDrop.commentList || []}
+                                                dropId={selectedDrop.id}
+                                                onReply={handleCommentReply}
+                                                onLike={onLikeComment}
+                                            />
+                                        ))
                                 ) : (
                                     <div className="text-center py-20 opacity-50">
                                         <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-[#e5e5e5]">

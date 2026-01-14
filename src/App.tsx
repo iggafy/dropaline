@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './services/supabase';
 import { Sidebar } from './components/Sidebar';
 import { InboxView } from './components/InboxView';
@@ -46,6 +46,7 @@ const App: React.FC = () => {
   const [batching, setBatching] = useState<string>('Instant');
   const [customDate, setCustomDate] = useState<string>('');
   const [customTime, setCustomTime] = useState<string>('');
+  const autoPrintProcessedIds = useRef<Set<string>>(new Set());
 
   // --- Auth & Init ---
   useEffect(() => {
@@ -116,42 +117,44 @@ const App: React.FC = () => {
     }
 
     // 2. Fetch Subscriptions & Creators
-    const { data: subs } = await supabase
+    const { data: subs, error: subsError } = await supabase
       .from('subscriptions')
       .select('creator_id, auto_print')
       .eq('subscriber_id', session.user.id);
 
+    if (subsError) console.error('Error fetching subscriptions:', subsError);
+
     const subIds = subs?.map(s => s.creator_id) || [];
     const subMap = new Map(subs?.map(s => [s.creator_id, s.auto_print]));
 
-    // Get profiles with real stats
-    const { data: allProfiles } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        creator_stats (subscriber_count)
-      `)
+    // Get profiles with real stats from our optimized view
+    const { data: creatorsData, error: creatorsError } = await supabase
+      .from('creator_search')
+      .select('*')
       .neq('id', session.user.id)
       .limit(50);
 
-    if (allProfiles) {
-      const mappedCreators: Creator[] = allProfiles.map((p: any) => ({
+    if (creatorsError) console.error('Error fetching creators:', creatorsError);
+
+    if (creatorsData) {
+      const mappedCreators: Creator[] = creatorsData.map((p: any) => ({
         id: p.id,
         name: p.name,
         handle: p.handle,
         bio: p.bio || '',
         avatar: p.avatar_url,
-        followerCount: p.creator_stats?.[0]?.subscriber_count || 0,
+        followerCount: p.follower_count || 0,
         isFollowing: subIds.includes(p.id),
         autoPrint: subMap.get(p.id) || false
       }));
       setCreators(mappedCreators);
     }
 
-    // 3. Fetch Transmissions
-    const authorsToFetch = [...subIds, session.user.id];
+    // 3. Fetch Transmissions (Followed + System + Self)
+    const SYSTEM_ACCOUNT_ID = '00000000-0000-0000-0000-000000000000';
+    const authorsToFetch = [...subIds, session.user.id, SYSTEM_ACCOUNT_ID];
 
-    const { data: dropsData } = await supabase
+    const { data: dropsData, error: dropsError } = await supabase
       .from('drops')
       .select(`
         *,
@@ -159,7 +162,7 @@ const App: React.FC = () => {
         likes (user_id),
         comments (
           id, text, created_at, parent_id, 
-          profiles (handle, name, avatar_url),
+          profiles:comments_author_id_fkey (handle, name, avatar_url),
           comment_likes (user_id)
         ),
         user_drop_statuses (user_id, status)
@@ -167,6 +170,8 @@ const App: React.FC = () => {
       .in('author_id', authorsToFetch)
       .order('created_at', { ascending: false })
       .limit(dropsLimit);
+
+    if (dropsError) console.error('Error fetching drops:', dropsError);
 
     if (dropsData) {
       setHasMoreDrops(dropsData.length >= dropsLimit);
@@ -188,8 +193,8 @@ const App: React.FC = () => {
           likes: d.likes.length,
           liked: isLiked,
           printCount,
-          comments: d.comments.length,
-          commentList: d.comments.map((c: any) => ({
+          comments: d.comments?.length || 0,
+          commentList: (d.comments || []).map((c: any) => ({
             id: c.id,
             authorHandle: c.profiles.handle,
             avatar: c.profiles.avatar_url,
@@ -364,11 +369,8 @@ const App: React.FC = () => {
     }
 
     const { data: results, error } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        creator_stats (subscriber_count)
-      `)
+      .from('creator_search')
+      .select('*')
       .neq('id', session.user.id)
       .ilike('handle', `%${query.replace('@', '')}%`)
       .limit(50);
@@ -393,7 +395,7 @@ const App: React.FC = () => {
         handle: p.handle,
         bio: p.bio || '',
         avatar: p.avatar_url,
-        followerCount: p.creator_stats?.[0]?.subscriber_count || 0,
+        followerCount: p.follower_count || 0,
         isFollowing: subIds.includes(p.id),
         autoPrint: subMap.get(p.id) || false
       }));
@@ -516,7 +518,12 @@ const App: React.FC = () => {
     }
 
     // Update local state
-    setDrops(prev => prev.map(d => d.id === dropId ? { ...d, status: 'printed' } : d));
+    setDrops(prev => prev.map(d => {
+      if (d.id === dropId && d.status !== 'printed') {
+        return { ...d, status: 'printed', printCount: (d.printCount || 0) + 1 };
+      }
+      return d.id === dropId ? { ...d, status: 'printed' } : d;
+    }));
     setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
   };
 
@@ -689,6 +696,31 @@ const App: React.FC = () => {
     }
   }, [printer.name]);
 
+  // --- Auto-Print Engine (Instant Mode) ---
+  useEffect(() => {
+    // Only trigger immediate auto-printing if the user is in 'Instant' mode.
+    // In all other modes, auto-printing is handled by the processBatch system.
+    if (!session?.user || batching !== 'Instant' || !drops.length || !creators.length || printer.isPrinting) return;
+
+    // Filter incoming drops that should be auto-printed
+    const toAutoPrint = drops.filter(d => {
+      // 1. Must be 'received'
+      // 2. Must not have been processed in this session
+      // 3. The author must have auto-print enabled
+      if (d.status !== 'received' || autoPrintProcessedIds.current.has(d.id)) return false;
+
+      const creator = creators.find(c => c.id === creators.find(cr => cr.handle === d.authorHandle)?.id);
+      return creator?.autoPrint === true;
+    });
+
+    if (toAutoPrint.length > 0) {
+      const dropToPrint = toAutoPrint[0]; // Take the first one found
+      autoPrintProcessedIds.current.add(dropToPrint.id);
+      console.log('Instant auto-print:', dropToPrint.title);
+      handlePrintDrop(dropToPrint.id);
+    }
+  }, [drops, creators, printer.isPrinting, batching]);
+
   // Consolidating batch release engine here
   useEffect(() => {
     if (!session?.user || batching === 'Instant') return;
@@ -696,19 +728,46 @@ const App: React.FC = () => {
     const checkInterval = setInterval(() => {
       const now = new Date();
       let shouldRelease = false;
+      let gateId = ''; // Used to uniquely identify THIS specific gate occurrence
 
+      // 1. Identify the current active gate
       if (batching === 'Daily') {
-        if (now.getHours() >= 8) shouldRelease = true;
+        const gateTime = new Date(now);
+        gateTime.setHours(8, 0, 0, 0);
+        if (now >= gateTime) {
+          shouldRelease = true;
+          gateId = `daily-${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+        }
       } else if (batching === 'Weekly') {
-        if (now.getDay() === 0) shouldRelease = true;
+        // Find most recent Sunday
+        const gateTime = new Date(now);
+        gateTime.setHours(8, 0, 0, 0);
+        const day = gateTime.getDay();
+        const diff = gateTime.getDate() - day;
+        const sunday = new Date(gateTime.setDate(diff));
+
+        if (now >= sunday) {
+          shouldRelease = true;
+          gateId = `weekly-${sunday.getFullYear()}-${sunday.getMonth()}-${sunday.getDate()}`;
+        }
       } else if (batching === 'Custom' && customDate && customTime) {
         const releasePoint = new Date(`${customDate}T${customTime}`);
-        if (now >= releasePoint) shouldRelease = true;
+        if (now >= releasePoint) {
+          shouldRelease = true;
+          gateId = `custom-${customDate}-${customTime}`;
+        }
       }
 
-      if (shouldRelease) {
+      // 2. ONLY fire if the gate is open AND we haven't processed this specific gate yet
+      if (shouldRelease && gateId) {
+        const lastGate = localStorage.getItem('dropaline_last_batch_gate');
         const hasQueued = drops.some(d => d.status === 'queued');
-        if (hasQueued) processBatch();
+
+        if (lastGate !== gateId && hasQueued) {
+          console.log(`Gate [${gateId}] open: Sweeping inbox...`);
+          localStorage.setItem('dropaline_last_batch_gate', gateId);
+          processBatch();
+        }
       }
     }, 60000);
 
@@ -721,18 +780,11 @@ const App: React.FC = () => {
 
     setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: 'Batch Release' }));
 
-    // 1. Update all queued drops to received/printed in DB
-    const { error } = await supabase
-      .from('user_drop_statuses')
-      .update({ status: 'received' })
-      .eq('user_id', session?.user.id)
-      .eq('status', 'queued');
-
-    if (error) {
-      console.error('Batch process failed', error);
-    } else {
-      // 2. Refresh UI
-      fetchData();
+    // Sequentially print the batch
+    for (const drop of queuedDrops) {
+      await handlePrintDrop(drop.id);
+      // Small pause between jobs for hardware stability
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
     setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
@@ -771,6 +823,7 @@ const App: React.FC = () => {
             onPrint={handlePrintDrop}
             onLike={handleLikeDrop}
             onAddComment={handleAddComment}
+            onLikeComment={handleLikeComment}
             onLoadMore={handleLoadMore}
             hasMore={hasMoreDrops}
           />
