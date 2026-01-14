@@ -26,6 +26,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
 
   return (
     <div className="w-64 h-full bg-[#ebebeb]/80 backdrop-blur-xl border-r border-[#d1d1d6] flex flex-col p-4 select-none">
+      {/* Window Controls (Mac Style) */}
+      <div className="flex gap-2 mb-6 px-1" style={{ WebkitAppRegion: 'drag' } as any}>
+        <button
+          onClick={() => (window as any).electron?.close()}
+          className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] hover:bg-[#ff5f56]/80 transition-all active:scale-90"
+        />
+        <button
+          onClick={() => (window as any).electron?.minimize()}
+          className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123] hover:bg-[#ffbd2e]/80 transition-all active:scale-90"
+        />
+        <button
+          onClick={() => (window as any).electron?.maximize()}
+          className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29] hover:bg-[#27c93f]/80 transition-all active:scale-90"
+        />
+      </div>
+
       {/* User Profile Snippet */}
       <div className="flex items-center gap-3 px-2 mb-8 mt-2">
         <div className="w-9 h-9 rounded-lg overflow-hidden border border-[#d1d1d6] shadow-sm bg-white flex items-center justify-center p-1.5">

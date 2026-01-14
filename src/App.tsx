@@ -40,7 +40,7 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   // Device & Preference State (Synced to DB)
-  const [paperSaver, setPaperSaver] = useState<boolean>(false);
+  const [doubleSided, setDoubleSided] = useState<boolean>(false);
   const [printer, setPrinter] = useState<PrinterState>(INITIAL_PRINTER);
   const [availablePrinters, setAvailablePrinters] = useState<any[]>([]);
   const [batching, setBatching] = useState<string>('Instant');
@@ -86,95 +86,6 @@ const App: React.FC = () => {
   }, []);
 
   // --- Data Fetching & Realtime ---
-  useEffect(() => {
-    if (session?.user) {
-      fetchData();
-
-      // Subscribe to Realtime changes
-      const channel = supabase
-        .channel('network-changes')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'drops' },
-          () => fetchData()
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'likes' },
-          () => fetchData()
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'comments' },
-          () => fetchData()
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'user_drop_statuses' },
-          () => fetchData()
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [session]);
-
-  // Save Printer Preference
-  useEffect(() => {
-    if (printer.name && printer.name !== 'Searching for Printers...') {
-      localStorage.setItem('dropaline_printer_name', printer.name);
-    }
-  }, [printer.name]);
-
-  // --- Auto-Batch Release Engine ---
-  useEffect(() => {
-    if (!session?.user || batching === 'Instant') return;
-
-    const checkInterval = setInterval(() => {
-      const now = new Date();
-      let shouldRelease = false;
-
-      if (batching === 'Daily') {
-        // Release if it's 8 AM or later
-        if (now.getHours() >= 8) shouldRelease = true;
-      } else if (batching === 'Weekly') {
-        // Release on Sundays
-        if (now.getDay() === 0) shouldRelease = true;
-      } else if (batching === 'Custom' && customDate && customTime) {
-        // Release if current time is >= custom set point
-        const releasePoint = new Date(`${customDate}T${customTime}`);
-        if (now >= releasePoint) shouldRelease = true;
-      }
-
-      if (shouldRelease) {
-        const hasQueued = drops.some(d => d.status === 'queued');
-        if (hasQueued) {
-          processBatch();
-        }
-      }
-    }, 60000); // Check every minute
-
-    return () => clearInterval(checkInterval);
-  }, [session, batching, customDate, customTime, drops]);
-
-  // Realtime Listeners
-  useEffect(() => {
-    if (!session?.user) return;
-
-    const channel = supabase.channel('app_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'drops' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_drop_statuses' }, () => fetchData())
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session]);
-
   const fetchData = async () => {
     if (!session?.user) return;
 
@@ -195,10 +106,10 @@ const App: React.FC = () => {
         batchMode: profile.batch_mode,
         batchDate: profile.batch_date,
         batchTime: profile.batch_time,
-        paperSaver: profile.paper_saver
+        doubleSided: profile.paper_saver
       };
       setUserProfile(p);
-      setPaperSaver(p.paperSaver || false);
+      setDoubleSided(p.doubleSided || false);
       setBatching(p.batchMode || 'Instant');
       setCustomDate(p.batchDate || '');
       setCustomTime(p.batchTime || '');
@@ -247,7 +158,7 @@ const App: React.FC = () => {
         profiles:author_id (name, handle, avatar_url),
         likes (user_id),
         comments (id, text, created_at, profiles (handle, name, avatar_url)),
-        user_drop_statuses (status)
+        user_drop_statuses (user_id, status)
       `)
       .in('author_id', authorsToFetch)
       .order('created_at', { ascending: false })
@@ -287,6 +198,46 @@ const App: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (session?.user) {
+      fetchData();
+
+      // Consolidated Realtime Channel
+      const channel = supabase
+        .channel('app-realtime')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'drops' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'likes' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'comments' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'user_drop_statuses' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'profiles' },
+          () => fetchData()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [session]);
+
   // --- Persistence ---
   // No longer using local storage, using DB sync
 
@@ -303,7 +254,28 @@ const App: React.FC = () => {
   // --- Actions ---
 
   const handleProfileUpdate = async (updatedProfile: UserProfile) => {
-    if (!session?.user) return;
+    if (!session?.user || !userProfile) return;
+
+    // Optimistic Update: Update user profile and related states immediately
+    const oldHandle = userProfile.handle;
+    setUserProfile(updatedProfile);
+
+    if (updatedProfile.doubleSided !== undefined) setDoubleSided(updatedProfile.doubleSided);
+    if (updatedProfile.batchMode !== undefined) setBatching(updatedProfile.batchMode);
+    if (updatedProfile.batchDate !== undefined) setCustomDate(updatedProfile.batchDate);
+    if (updatedProfile.batchTime !== undefined) setCustomTime(updatedProfile.batchTime);
+
+    // Also update current drops list if author info changed (for immediate reflection)
+    setDrops(prev => prev.map(d =>
+      d.authorHandle === oldHandle
+        ? {
+          ...d,
+          author: updatedProfile.name,
+          authorHandle: updatedProfile.handle,
+          authorAvatar: updatedProfile.avatar
+        }
+        : d
+    ));
 
     const { error } = await supabase
       .from('profiles')
@@ -314,7 +286,7 @@ const App: React.FC = () => {
         batch_mode: updatedProfile.batchMode,
         batch_date: updatedProfile.batchDate,
         batch_time: updatedProfile.batchTime,
-        paper_saver: updatedProfile.paperSaver,
+        paper_saver: updatedProfile.doubleSided,
         avatar_url: updatedProfile.avatar
       })
       .eq('id', session.user.id);
@@ -322,10 +294,10 @@ const App: React.FC = () => {
     if (error) {
       console.error('Failed to update profile', error);
       alert('Failed to update profile. Please try again.');
+      // Revert on error
+      fetchData();
       return;
     }
-
-    setUserProfile(updatedProfile);
   };
 
   const getAvatarUrl = (url?: string, handle?: string) => {
@@ -423,7 +395,7 @@ const App: React.FC = () => {
 
     setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: dropId }));
 
-    // Generate HTML for printing (A4 Compatible & Thermal Optimized)
+    // Generate HTML for printing (Gateway Aesthetic)
     const printHtml = `
       <html>
         <head>
@@ -439,9 +411,9 @@ const App: React.FC = () => {
             }
             .paper {
               width: 100%;
-              max-width: ${paperSaver ? '350px' : '450px'};
+              max-width: 450px;
               min-height: 100vh;
-              padding: ${paperSaver ? '30px 20px' : '60px 40px'};
+              padding: 60px 40px;
               font-family: ${drop.layout === 'zine' ? '"Courier New", Courier, monospace' : 'Georgia, serif'};
               background: white;
               box-sizing: border-box;
@@ -449,24 +421,30 @@ const App: React.FC = () => {
             .title {
               text-align: center;
               text-transform: uppercase;
-              font-size: ${paperSaver ? '20px' : '28px'};
+              font-size: 28px;
               margin-bottom: 10px;
               letter-spacing: 2px;
               font-weight: bold;
             }
             .divider {
               border-top: 2px solid black;
-              margin: 20px 0;
+              margin: 15px 0;
+            }
+            .author-line {
+              font-style: italic;
+              margin-bottom: 25px;
+              font-size: 14px;
+              color: #444;
             }
             .content {
-              font-size: ${paperSaver ? '13px' : '16px'};
-              line-height: ${paperSaver ? '1.3' : '1.7'};
+              font-size: 16px;
+              line-height: 1.7;
               color: #1a1a1a;
               white-space: pre-wrap;
               word-wrap: break-word;
             }
             .footer {
-              margin-top: 40px;
+              margin-top: 50px;
               padding-top: 20px;
               border-top: 0.5px solid #eee;
               font-size: 10px;
@@ -474,6 +452,7 @@ const App: React.FC = () => {
               color: #888;
               text-transform: uppercase;
               letter-spacing: 1px;
+              line-height: 1.5;
             }
           </style>
           <title>Drop a Line</title>
@@ -482,9 +461,8 @@ const App: React.FC = () => {
           <div class="paper">
             <div class="title">${drop.title}</div>
             <div class="divider"></div>
-            <p style="font-style: italic; margin-bottom: 25px;">Published by @${drop.authorHandle}</p>
+            <div class="author-line">Published by @${drop.authorHandle}</div>
             <div class="content">${drop.content}</div>
-            <div class="divider" style="margin-top: 40px; border-top-width: 1px;"></div>
             <div class="footer">
               Printed via Drop a Line Output Gateway<br/>
               ${new Date().toLocaleDateString()} • ${new Date().toLocaleTimeString()}
@@ -504,7 +482,11 @@ const App: React.FC = () => {
           return; // User cancelled save dialog
         }
       } else {
-        (window as any).electron.print({ html: printHtml, printerName: printer.name });
+        (window as any).electron.print({
+          html: printHtml,
+          printerName: printer.name,
+          duplexMode: doubleSided ? 'longEdge' : 'simplex'
+        });
       }
     }
 
@@ -648,22 +630,38 @@ const App: React.FC = () => {
       .match({ subscriber_id: session.user.id, creator_id: creatorId });
   };
 
-  // Real-time setup
+  // Consolidating printer preference effect here to keep it organized
   useEffect(() => {
-    if (!session?.user) return;
+    if (printer.name && printer.name !== 'Searching for Printers...') {
+      localStorage.setItem('dropaline_printer_name', printer.name);
+    }
+  }, [printer.name]);
 
-    const channel = supabase
-      .channel('public:drops')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'drops' }, (payload) => {
-        // Only fetch if it's someone we follow or ourselves
-        fetchData();
-      })
-      .subscribe();
+  // Consolidating batch release engine here
+  useEffect(() => {
+    if (!session?.user || batching === 'Instant') return;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session]);
+    const checkInterval = setInterval(() => {
+      const now = new Date();
+      let shouldRelease = false;
+
+      if (batching === 'Daily') {
+        if (now.getHours() >= 8) shouldRelease = true;
+      } else if (batching === 'Weekly') {
+        if (now.getDay() === 0) shouldRelease = true;
+      } else if (batching === 'Custom' && customDate && customTime) {
+        const releasePoint = new Date(`${customDate}T${customTime}`);
+        if (now >= releasePoint) shouldRelease = true;
+      }
+
+      if (shouldRelease) {
+        const hasQueued = drops.some(d => d.status === 'queued');
+        if (hasQueued) processBatch();
+      }
+    }, 60000);
+
+    return () => clearInterval(checkInterval);
+  }, [session, batching, customDate, customTime, drops]);
 
   const processBatch = async () => {
     const queuedDrops = drops.filter(d => d.status === 'queued');
@@ -715,9 +713,9 @@ const App: React.FC = () => {
       case AppView.READER:
         return (
           <ReaderView
-            drops={drops}
+            drops={drops.filter(d => d.authorHandle !== userProfile?.handle)}
             printer={printer}
-            paperSaver={paperSaver}
+            doubleSided={doubleSided}
             onPrint={handlePrintDrop}
             onLike={handleLikeDrop}
             onAddComment={handleAddComment}
@@ -730,6 +728,7 @@ const App: React.FC = () => {
           <WriterView
             userProfile={userProfile}
             onPublish={handlePublishDrop}
+            doubleSided={doubleSided}
           />
         );
       case AppView.FOLLOWING:
@@ -757,10 +756,10 @@ const App: React.FC = () => {
             userProfile={userProfile}
             onProfileUpdate={handleProfileUpdate}
             onAvatarUpload={handleAvatarUpload}
-            paperSaver={paperSaver}
-            setPaperSaver={(val) => {
-              setPaperSaver(val);
-              handleProfileUpdate({ ...userProfile, paperSaver: val } as UserProfile);
+            doubleSided={doubleSided}
+            setDoubleSided={(val) => {
+              setDoubleSided(val);
+              handleProfileUpdate({ ...userProfile, doubleSided: val } as UserProfile);
             }}
             batching={batching}
             setBatching={(val) => {

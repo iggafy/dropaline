@@ -6,11 +6,12 @@ import { Drop, UserProfile } from '../types';
 interface WriterViewProps {
   onPublish: (drop: Drop) => void;
   userProfile: UserProfile;
+  doubleSided: boolean;
 }
 
 type LayoutType = 'classic' | 'zine' | 'minimal';
 
-export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }) => {
+export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile, doubleSided }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [currentLayout, setCurrentLayout] = useState<LayoutType>('classic');
@@ -132,21 +133,25 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
         {/* Editor or Preview */}
         <div className="flex-1 overflow-y-auto bg-white p-8 md:p-12 transition-all">
           {isPreviewMode ? (
-            <div className={`max-w-2xl mx-auto bg-white aspect-[1/1.41] shadow-2xl p-16 border border-[#e5e5e5] relative flex flex-col ${getLayoutClasses(currentLayout)}`}>
-              <div className={`absolute top-8 left-8 text-[10px] text-[#86868b] uppercase tracking-tighter border-b border-[#d1d1d6] pb-1 w-full max-w-[calc(100%-64px)] ${currentLayout === 'zine' ? 'border-dashed' : ''}`}>
-                Drop a Line Network • {new Date().toLocaleDateString()}
-              </div>
-
-              <h1 className={`text-3xl text-center mt-12 mb-8 ${currentLayout === 'zine' ? 'font-black uppercase tracking-tighter' : 'font-bold'}`}>
+            <div className={`max-w-2xl mx-auto bg-white aspect-[1/1.41] shadow-2xl p-12 md:p-16 border border-[#e5e5e5] relative flex flex-col ${getLayoutClasses(currentLayout)}`}>
+              <h1 className={`text-2xl md:text-3xl text-center mb-2 text-[#1d1d1f] font-bold uppercase tracking-wider`}>
                 {title || 'Untitled'}
               </h1>
 
-              <div className={`text-[#1d1d1f] text-sm leading-[1.8] whitespace-pre-wrap flex-1 ${currentLayout === 'minimal' ? 'text-gray-600' : ''}`}>
+              <div className="border-t-2 border-black mb-4"></div>
+              <p className="text-sm italic text-[#48484a] mb-8 text-center md:text-left">
+                Published by @{userProfile.handle}
+              </p>
+
+              <div className="text-[#1d1d1f] text-sm leading-[1.8] whitespace-pre-wrap flex-1">
                 {content || 'Your content will appear here...'}
               </div>
 
-              <div className="text-[10px] text-center text-[#d1d1d6] mt-8 uppercase tracking-[0.2em]">
-                {currentLayout === 'zine' ? '*** END OF TRANSMISSION ***' : 'End of Transmission'}
+              <div className="mt-16 pt-8 border-t border-[#f2f2f2] text-center">
+                <p className="text-[10px] text-[#86868b] uppercase tracking-widest leading-relaxed">
+                  Printed via Drop a Line Output Gateway<br />
+                  {new Date().toLocaleDateString()} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
               </div>
             </div>
           ) : (

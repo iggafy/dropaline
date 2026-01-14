@@ -9,8 +9,8 @@ interface SettingsViewProps {
   userProfile: UserProfile;
   onProfileUpdate: (profile: UserProfile) => void;
   onAvatarUpload: (file: File) => void;
-  paperSaver: boolean;
-  setPaperSaver: (value: boolean) => void;
+  doubleSided: boolean;
+  setDoubleSided: (value: boolean) => void;
   // Batching Props
   batching: string;
   setBatching: (value: string) => void;
@@ -29,8 +29,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   userProfile,
   onProfileUpdate,
   onAvatarUpload,
-  paperSaver,
-  setPaperSaver,
+  doubleSided,
+  setDoubleSided,
   batching,
   setBatching,
   customDate,
@@ -314,14 +314,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
               <div className="flex items-center justify-between p-5">
                 <div>
-                  <p className="text-sm font-medium text-[#1d1d1f]">Paper Conservation</p>
-                  <p className="text-[11px] text-[#86868b] mt-0.5">Format content to use less paper (e.g., smaller fonts).</p>
+                  <p className="text-sm font-medium text-[#1d1d1f]">Duplex Output</p>
+                  <p className="text-[11px] text-[#86868b] mt-0.5">Enable double-sided printing (Duplex) if supported by your device.</p>
                 </div>
                 <div
-                  onClick={() => setPaperSaver(!paperSaver)}
-                  className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${paperSaver ? 'bg-green-500' : 'bg-[#e5e5e5]'}`}
+                  onClick={() => setDoubleSided(!doubleSided)}
+                  className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${doubleSided ? 'bg-green-500' : 'bg-[#e5e5e5]'}`}
                 >
-                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm transition-all ${paperSaver ? 'left-6' : 'left-1'}`}></div>
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm transition-all ${doubleSided ? 'left-6' : 'left-1'}`}></div>
                 </div>
               </div>
             </div>

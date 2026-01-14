@@ -19,7 +19,7 @@ export interface UserProfile {
   batchMode?: 'Instant' | 'Daily' | 'Weekly' | 'Custom';
   batchDate?: string;
   batchTime?: string;
-  paperSaver?: boolean;
+  doubleSided?: boolean;
 }
 
 export interface Comment {

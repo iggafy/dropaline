@@ -58,6 +58,24 @@ ipcMain.handle('print-to-pdf', async (event, { html, filename }) => {
   return false;
 });
 
+// --- Window Controls ---
+ipcMain.on('window-minimize', (event) => {
+  BrowserWindow.fromWebContents(event.sender).minimize();
+});
+
+ipcMain.on('window-maximize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win.maximize();
+  }
+});
+
+ipcMain.on('window-close', (event) => {
+  BrowserWindow.fromWebContents(event.sender).close();
+});
+
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1280,
@@ -65,7 +83,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 768,
     title: '',
-    titleBarStyle: 'hiddenInset', // Mac style integrated title bar
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // Mac style integrated title bar
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
