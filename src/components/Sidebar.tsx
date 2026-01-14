@@ -42,7 +42,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
       </div>
 
       <div className="flex-1 flex flex-col gap-1">
-        <p className="px-2 text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-2">Main</p>
         {navItems.map((item) => (
           <button
             key={item.id}

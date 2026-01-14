@@ -346,7 +346,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl border border-red-100 transition-all w-full justify-center shadow-sm"
             >
               <LogOut size={18} />
-              Terminate Session
+              Log Out
             </button>
             <p className="text-[10px] text-center text-[#86868b] mt-4 uppercase tracking-[0.2em]">
               Relay Terminal v1.0.0
