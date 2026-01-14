@@ -1,6 +1,6 @@
 {
   "name": "dropaline",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "The physical internet for writers and readers.",
   "homepage": ".",
   "main": "electron/main.js",
@@ -20,6 +20,7 @@
     "extends": null,
     "appId": "com.dropaline.app",
     "productName": "Drop a Line",
+    "executableName": "dropaline",
     "publish": [
       {
         "provider": "github",
