@@ -17,7 +17,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProfile }) => {
   const navItems = [
-    { id: AppView.READER, label: 'Reader', icon: Inbox },
+    { id: AppView.INBOX, label: 'Inbox', icon: Inbox },
     { id: AppView.WRITER, label: 'Writer', icon: PenTool },
     { id: AppView.FOLLOWING, label: 'Following', icon: Users },
     { id: AppView.MY_DROPS, label: 'My Drops', icon: Layout },

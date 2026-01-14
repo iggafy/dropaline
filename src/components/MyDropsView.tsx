@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
     BarChart3,
@@ -15,20 +14,84 @@ import { Drop, Comment } from '../types';
 
 interface MyDropsViewProps {
     drops: Drop[];
-    onReply: (dropId: string, text: string) => void;
+    onReply: (dropId: string, text: string, parentId?: string) => void;
+    onLikeComment: (dropId: string, commentId: string) => void;
 }
 
-export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
+interface CommentItemProps {
+    comment: Comment;
+    dropId: string;
+    onReply: (handle: string, id: string) => void;
+    onLike: (dropId: string, commentId: string) => void;
+}
+
+const CommentItem: React.FC<CommentItemProps> = ({ comment, dropId, onReply, onLike }) => {
+    const isReply = comment.text.trim().startsWith('@');
+
+    return (
+        <div className={`flex flex-col gap-2 ${isReply ? 'ml-8' : ''}`}>
+            <div className="bg-white p-4 rounded-2xl border border-[#e5e5e5] shadow-sm hover:shadow-md transition-shadow group">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full overflow-hidden border border-[#e5e5e5]">
+                            <img
+                                src={comment.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${comment.authorHandle}`}
+                                alt="Avatar"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <span className="text-xs font-bold text-[#0066cc]">@{comment.authorHandle}</span>
+                    </div>
+                    <span className="text-[10px] text-[#86868b]">{new Date(comment.timestamp).toLocaleDateString()}</span>
+                </div>
+
+                <p className="text-sm text-[#48484a] leading-relaxed mb-3">
+                    {comment.text}
+                </p>
+
+                <div className="flex items-center gap-4 border-t border-[#f2f2f2] pt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        onClick={() => onReply(comment.authorHandle, comment.id)}
+                        className="flex items-center gap-1.5 text-[10px] font-bold text-[#86868b] hover:text-[#0066cc] uppercase tracking-wider"
+                    >
+                        <Send size={10} />
+                        Reply
+                    </button>
+                    <button
+                        onClick={() => onLike(dropId, comment.id)}
+                        className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${comment.liked ? 'text-red-500' : 'text-[#86868b] hover:text-red-500'}`}
+                    >
+                        <Heart size={10} className={comment.liked ? 'fill-current' : ''} />
+                        {comment.liked ? 'Liked' : 'Like'}
+                        {comment.likes > 0 && <span className="ml-1 opacity-60">({comment.likes})</span>}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply, onLikeComment }) => {
     const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
+    const [activeParentId, setActiveParentId] = useState<string | null>(null);
 
     const selectedDrop = drops.find(d => d.id === selectedDropId);
 
     const handleReply = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedDropId || !replyText.trim()) return;
-        onReply(selectedDropId, replyText);
+        onReply(selectedDropId, replyText, activeParentId || undefined);
         setReplyText('');
+        setActiveParentId(null);
+    };
+
+    const handleCommentReply = (handle: string, commentId: string) => {
+        setReplyText(`@${handle} `);
+        setActiveParentId(commentId);
+        setTimeout(() => {
+            document.getElementById('thread-input')?.focus();
+        }, 0);
     };
 
     return (
@@ -47,8 +110,6 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
                             </div>
                         ) : (
                             drops.map((drop) => {
-                                const printedCount = drop.printCount || 0;
-
                                 return (
                                     <div
                                         key={drop.id}
@@ -102,7 +163,7 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
 
                 {/* Engagement Panel (Details) */}
                 {selectedDropId && selectedDrop && (
-                    <div className="w-full md:w-[450px] border-l border-[#f2f2f2] flex flex-col bg-[#fafafa] animate-in slide-in-from-right duration-300">
+                    <div className="w-full md:w-[450px] border-l border-[#f2f2f2] flex flex-col bg-white animate-in slide-in-from-right duration-300">
                         <header className="h-16 flex items-center justify-between px-6 border-b border-[#f2f2f2] bg-white shrink-0">
                             <div className="flex items-center gap-3">
                                 <button
@@ -113,51 +174,70 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
                                 </button>
                                 <h3 className="text-sm font-bold text-[#1d1d1f] truncate max-w-[200px]">{selectedDrop.title}</h3>
                             </div>
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-[#86868b] uppercase tracking-wider bg-[#f5f5f7] px-2 py-1 rounded-full">
+                                <MessageCircle size={10} />
+                                {selectedDrop.commentList?.length || 0} Comments
+                            </div>
                         </header>
 
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            {/* Analytics Summary */}
-                            <div className="grid grid-cols-1">
-                                <div className="bg-white p-4 rounded-xl border border-[#e5e5e5] shadow-sm">
-                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-1">Personal Reach</p>
-                                    <p className="text-lg font-bold text-[#1d1d1f]">{selectedDrop.likes + 1} devices</p>
-                                </div>
-                            </div>
-
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#fafafa]">
                             {/* Comments Section */}
-                            <div className="flex flex-col gap-4">
-                                <div className="flex items-center gap-2 text-[10px] font-bold text-[#86868b] uppercase tracking-wider border-b border-[#e5e5e5] pb-2">
-                                    <MessageCircle size={12} />
-                                    Network Feedback ({selectedDrop.commentList?.length || 0})
-                                </div>
-
-                                <div className="space-y-4">
-                                    {selectedDrop.commentList && selectedDrop.commentList.length > 0 ? (
-                                        selectedDrop.commentList.map((comment) => (
-                                            <div key={comment.id} className="bg-white p-4 rounded-xl border border-[#e5e5e5] shadow-sm space-y-2">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-6 h-6 rounded-full overflow-hidden border border-[#e5e5e5]">
-                                                            <img
-                                                                src={comment.avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${comment.authorHandle}`}
-                                                                alt="Avatar"
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        </div>
-                                                        <span className="text-xs font-bold text-[#0066cc]">@{comment.authorHandle}</span>
-                                                    </div>
-                                                    <span className="text-[10px] text-[#86868b]">{new Date(comment.timestamp).toLocaleDateString()}</span>
-                                                </div>
-                                                <p className="text-sm text-[#48484a] leading-relaxed">{comment.text}</p>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-12 opacity-50">
-                                            <p className="text-xs font-medium text-[#86868b]">No comments yet on this drop.</p>
+                            <div className="space-y-4">
+                                {selectedDrop.commentList && selectedDrop.commentList.length > 0 ? (
+                                    selectedDrop.commentList.map((comment) => (
+                                        <CommentItem
+                                            key={comment.id}
+                                            comment={comment}
+                                            dropId={selectedDrop.id}
+                                            onReply={handleCommentReply}
+                                            onLike={onLikeComment}
+                                        />
+                                    ))
+                                ) : (
+                                    <div className="text-center py-20 opacity-50">
+                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-[#e5e5e5]">
+                                            <MessageCircle size={20} className="text-[#d1d1d6]" />
                                         </div>
-                                    )}
-                                </div>
+                                        <p className="text-xs font-medium text-[#86868b]">No feedback yet on this transmission.</p>
+                                    </div>
+                                )}
                             </div>
+                        </div>
+
+                        {/* Thread Input Area */}
+                        <div className="p-4 bg-white border-t border-[#f2f2f2] shrink-0">
+                            {activeParentId && (
+                                <div className="flex items-center justify-between mb-2 px-2 py-1 bg-[#f0f7ff] rounded-lg border border-[#0066cc]/20">
+                                    <span className="text-[10px] font-bold text-[#0066cc] uppercase">Replying to message</span>
+                                    <button
+                                        onClick={() => {
+                                            setActiveParentId(null);
+                                            setReplyText('');
+                                        }}
+                                        className="text-[10px] font-bold text-[#86868b] hover:text-[#1d1d1f]"
+                                    >Cancel</button>
+                                </div>
+                            )}
+                            <form onSubmit={handleReply} className="relative">
+                                <input
+                                    id="thread-input"
+                                    type="text"
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    placeholder={replyText.startsWith('@') ? `Messaging ${replyText.split(' ')[0]}...` : "Reply to thread..."}
+                                    className="w-full bg-[#f5f5f7] border-none rounded-2xl py-3 pl-4 pr-12 text-sm focus:ring-2 focus:ring-[#0066cc]/20 transition-all placeholder:text-[#86868b]"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!replyText.trim()}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#0066cc] disabled:text-[#d1d1d6] transition-colors"
+                                >
+                                    <Send size={18} />
+                                </button>
+                            </form>
+                            <p className="text-[10px] text-[#86868b] mt-2 text-center uppercase tracking-widest font-medium opacity-50">
+                                End of Thread
+                            </p>
                         </div>
                     </div>
                 )}

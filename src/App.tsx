@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './services/supabase';
 import { Sidebar } from './components/Sidebar';
-import { ReaderView } from './components/ReaderView';
+import { InboxView } from './components/InboxView';
 import { WriterView } from './components/WriterView';
 import { SubscriptionsView } from './components/SubscriptionsView';
 import { SettingsView } from './components/SettingsView';
@@ -32,7 +32,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // App State
-  const [view, setView] = useState<AppView>(AppView.READER);
+  const [view, setView] = useState<AppView>(AppView.INBOX);
   const [drops, setDrops] = useState<Drop[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [dropsLimit, setDropsLimit] = useState(20);
@@ -157,7 +157,11 @@ const App: React.FC = () => {
         *,
         profiles:author_id (name, handle, avatar_url),
         likes (user_id),
-        comments (id, text, created_at, profiles (handle, name, avatar_url)),
+        comments (
+          id, text, created_at, parent_id, 
+          profiles (handle, name, avatar_url),
+          comment_likes (user_id)
+        ),
         user_drop_statuses (user_id, status)
       `)
       .in('author_id', authorsToFetch)
@@ -190,7 +194,10 @@ const App: React.FC = () => {
             authorHandle: c.profiles.handle,
             avatar: c.profiles.avatar_url,
             text: c.text,
-            timestamp: new Date(c.created_at).getTime()
+            timestamp: new Date(c.created_at).getTime(),
+            parentId: c.parent_id,
+            likes: c.comment_likes?.length || 0,
+            liked: c.comment_likes?.some((l: any) => l.user_id === session.user.id) || false
           }))
         };
       });
@@ -228,6 +235,11 @@ const App: React.FC = () => {
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'profiles' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'comment_likes' },
           () => fetchData()
         )
         .subscribe();
@@ -528,7 +540,43 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddComment = async (dropId: string, text: string) => {
+  const handleLikeComment = async (dropId: string, commentId: string) => {
+    if (!session?.user) return;
+
+    // Optimistic Update
+    setDrops(prev => prev.map(d => {
+      if (d.id === dropId) {
+        return {
+          ...d,
+          commentList: d.commentList?.map(c => {
+            if (c.id === commentId) {
+              const newLikedState = !c.liked;
+              return {
+                ...c,
+                liked: newLikedState,
+                likes: newLikedState ? c.likes + 1 : c.likes - 1
+              };
+            }
+            return c;
+          })
+        };
+      }
+      return d;
+    }));
+
+    // Find the comment for accurate state
+    const drop = drops.find(d => d.id === dropId);
+    const comment = drop?.commentList?.find(c => c.id === commentId);
+    const currentlyLiked = comment?.liked;
+
+    if (!currentlyLiked) {
+      await supabase.from('comment_likes').insert({ user_id: session.user.id, comment_id: commentId });
+    } else {
+      await supabase.from('comment_likes').delete().match({ user_id: session.user.id, comment_id: commentId });
+    }
+  };
+
+  const handleAddComment = async (dropId: string, text: string, parentId?: string) => {
     if (!session?.user || !userProfile) return;
 
     // DB Insert
@@ -537,7 +585,8 @@ const App: React.FC = () => {
       .insert({
         drop_id: dropId,
         author_id: session.user.id,
-        text: text
+        text: text,
+        parent_id: parentId
       })
       .select()
       .single();
@@ -552,7 +601,10 @@ const App: React.FC = () => {
       id: newComment.id,
       authorHandle: userProfile.handle,
       text: newComment.text,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      parentId: newComment.parent_id,
+      likes: 0,
+      liked: false
     };
 
     setDrops(prev => prev.map(d => {
@@ -588,7 +640,7 @@ const App: React.FC = () => {
 
     // Refresh drops to see it
     fetchData();
-    setView(AppView.READER);
+    setView(AppView.INBOX);
   };
 
   const toggleSubscription = async (creatorId: string) => {
@@ -710,9 +762,9 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (view) {
-      case AppView.READER:
+      case AppView.INBOX:
         return (
-          <ReaderView
+          <InboxView
             drops={drops.filter(d => d.authorHandle !== userProfile?.handle)}
             printer={printer}
             doubleSided={doubleSided}
@@ -745,6 +797,7 @@ const App: React.FC = () => {
           <MyDropsView
             drops={drops.filter(d => d.authorHandle === userProfile?.handle)}
             onReply={handleAddComment}
+            onLikeComment={handleLikeComment}
           />
         );
       case AppView.SETTINGS:

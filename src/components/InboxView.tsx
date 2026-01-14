@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Printer, CheckCircle2, Clock, MoreHorizontal, Layout, Inbox, Heart, MessageCircle, Eye, X, Send, Hourglass, RotateCcw } from 'lucide-react';
 import { Drop, PrinterState } from '../types';
 
-interface ReaderViewProps {
+interface InboxViewProps {
   drops: Drop[];
   printer: PrinterState;
   doubleSided: boolean;
@@ -14,7 +14,7 @@ interface ReaderViewProps {
   hasMore?: boolean;
 }
 
-export const ReaderView: React.FC<ReaderViewProps> = ({
+export const InboxView: React.FC<InboxViewProps> = ({
   drops,
   printer,
   doubleSided,

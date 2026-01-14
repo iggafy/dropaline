@@ -1,6 +1,6 @@
 
 export enum AppView {
-  READER = 'reader',
+  INBOX = 'reader',
   WRITER = 'writer',
   FOLLOWING = 'following',
   MY_DROPS = 'my_drops',
@@ -29,6 +29,9 @@ export interface Comment {
   avatar?: string;
   text: string;
   timestamp: number; // Converted from created_at
+  parentId?: string;
+  likes: number;
+  liked: boolean;
 }
 
 export interface Drop {
