@@ -35,9 +35,6 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
         <div className="h-full flex flex-col bg-white overflow-hidden">
             <header className="h-16 flex items-center px-8 border-b border-[#f2f2f2] shrink-0 justify-between">
                 <h2 className="text-xl font-bold text-[#1d1d1f]">My Transmissions</h2>
-                <div className="flex items-center gap-2 px-3 py-1 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm">
-                    Analytics Active
-                </div>
             </header>
 
             <div className="flex-1 flex overflow-hidden">
@@ -46,9 +43,7 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
                     <div className="p-8 max-w-4xl mx-auto space-y-4">
                         {drops.length === 0 ? (
                             <div className="text-center py-20 bg-[#fafafa] rounded-2xl border border-dashed border-[#d1d1d6]">
-                                <BarChart size={48} className="mx-auto mb-4 text-[#d1d1d6]" />
-                                <h3 className="text-lg font-bold text-[#1d1d1f]">No transmissions yet</h3>
-                                <p className="text-sm text-[#86868b] mt-2">Publish your first drop to see how the network reacts.</p>
+                                <BarChart size={48} className="mx-auto text-[#d1d1d6]" />
                             </div>
                         ) : (
                             drops.map((drop) => {
