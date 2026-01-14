@@ -29,14 +29,17 @@ jobs:
         run: npm install
 
       - name: Build Web App
+        env:
+          REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
+          REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
         run: npm run build
 
       - name: Build and Publish Electron App
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
+          REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
           # Force unsigned builds across all platforms
           CSC_IDENTITY_AUTO_DISCOVERY: false
           CSC_SKIP_FORCE_SIGN: true
-          # We remove CSC_LINK and other secrets to prevent electron-builder 
-          # from attempting to resolve them when they are empty.
         run: npx electron-builder --${{ matrix.os == 'ubuntu-latest' && 'linux' || (matrix.os == 'windows-latest' && 'win' || 'mac') }} --publish always

@@ -4,7 +4,7 @@ import { Download, Monitor, Mail, Printer, Heart, Github, Globe, Feather, Shield
 import logo from '../assets/logo.png';
 
 export const LandingView: React.FC = () => {
-    const latestVersion = "1.0.7";
+    const latestVersion = "1.0.8";
     const githubRepo = "https://github.com/iggafy/dropaline";
 
     const downloadLinks = {

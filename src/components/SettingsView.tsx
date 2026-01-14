@@ -551,7 +551,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-[var(--text-main)]">Application version</p>
-                  <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">DROP A LINE V1.0.7</p>
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">DROP A LINE V1.0.8</p>
                 </div>
                 <button
                   onClick={async () => {
