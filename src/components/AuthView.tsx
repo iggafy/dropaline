@@ -47,7 +47,10 @@ export const AuthView: React.FC = () => {
   return (
     <div className="h-screen w-full flex items-center justify-center bg-[#f5f5f7]">
       <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl border border-[#d1d1d6]">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="mb-6 w-24 h-24 rounded-2xl overflow-hidden border border-[#d1d1d6] shadow-sm bg-white flex items-center justify-center p-4">
+            <img src="/logo.png" alt="Drop a Line Logo" className="w-full object-contain" />
+          </div>
           <h1 className="text-2xl font-bold text-[#1d1d1f]">Drop a Line</h1>
           <p className="text-sm text-[#86868b] mt-2">The physical internet for writers and readers.</p>
         </div>
