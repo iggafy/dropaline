@@ -44,7 +44,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Temporary profile state for editing mode
+  // Local profile state for staging changes before save
   const [tempProfile, setTempProfile] = useState(userProfile);
 
   const saveProfile = () => {
@@ -333,7 +333,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div>
                 <h4 className="text-xs font-bold text-[#0066cc] mb-1">Secure Relay Active</h4>
                 <p className="text-[11px] text-[#0066cc]/80 leading-relaxed font-medium">
-                  Your physical location and IP are hidden behind the DropaLine bridge. Only your followed network can transmit data packets to your hardware gateway.
+                  Your physical location and IP are hidden behind the Drop a Line bridge. Only your followed network can transmit data packets to your hardware gateway.
                 </p>
               </div>
             </div>

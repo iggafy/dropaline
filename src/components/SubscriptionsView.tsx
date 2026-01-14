@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserPlus, Search, AtSign, UserCheck, X, Printer } from 'lucide-react';
+import { UserPlus, Search, AtSign, UserCheck, X, Printer, Users } from 'lucide-react';
 import { Creator } from '../types';
 
 interface SubscriptionsViewProps {
@@ -87,7 +87,7 @@ export const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                   </div>
                   <h4 className="text-base font-semibold text-[#1d1d1f]">No creator found</h4>
                   <p className="text-sm text-[#86868b] mt-1">
-                    We couldn't find anyone with the handle "@{searchQuery}".<br />Check the spelling or ask them for their DropaLine link.
+                    We couldn't find anyone with the handle "@{searchQuery}".<br />Check the spelling or ask them for their Drop a Line link.
                   </p>
                 </div>
               )}
@@ -105,7 +105,7 @@ export const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
               </div>
 
               {following.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   {following.map(creator => (
                     <CreatorCard
                       key={creator.id}
@@ -116,13 +116,13 @@ export const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-24 px-4 bg-white rounded-2xl">
-                  <div className="w-20 h-20 bg-[#f5f5f7] rounded-full flex items-center justify-center mx-auto mb-6 text-[#d1d1d6]">
-                    <UserPlus size={40} />
+                <div className="text-center py-20 bg-[#fafafa] rounded-2xl border border-dashed border-[#d1d1d6]">
+                  <div className="w-16 h-16 bg-[#f5f5f7] rounded-full flex items-center justify-center mx-auto mb-4 text-[#86868b]">
+                    <Users size={32} />
                   </div>
-                  <h3 className="text-xl font-bold text-[#1d1d1f] mb-2">Build your physical feed</h3>
-                  <p className="text-[#86868b] max-w-sm mx-auto leading-relaxed text-sm">
-                    Connect with writers, artists, and thinkers by searching for their unique DropaLine handle above.
+                  <h4 className="text-base font-semibold text-[#1d1d1f]">Your network is empty</h4>
+                  <p className="text-sm text-[#86868b] mt-1">
+                    Connect with writers, artists, and thinkers by searching for their unique Drop a Line handle above.
                   </p>
                 </div>
               )}

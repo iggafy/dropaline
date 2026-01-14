@@ -3,7 +3,7 @@
 
 -- 1. Create Profiles Table
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE NOT NULL PRIMARY KEY,
+  id UUID NOT NULL PRIMARY KEY,
   email TEXT,
   handle TEXT UNIQUE,
   name TEXT,
@@ -37,6 +37,9 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='paper_saver') THEN
         ALTER TABLE public.profiles ADD COLUMN paper_saver BOOLEAN DEFAULT FALSE;
     END IF;
+
+    -- Remove strict FK if it exists to allow system accounts
+    ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
 END $$;
 
 -- 3. Create Drops Table
@@ -140,11 +143,10 @@ BEGIN
     CREATE POLICY "Users can update own statuses." ON public.user_drop_statuses FOR UPDATE USING (auth.uid() = user_id);
 END $$;
 
-  -- 16. SYSTEM ACCOUNT
-  INSERT INTO public.profiles (id, handle, name, bio, avatar_url)
-  VALUES ('00000000-0000-0000-0000-000000000000', 'dropaline', 'Drop a Line Network', 'Official relay for the Drop a Line network.', 'https://api.dicebear.com/7.x/shapes/svg?seed=dropaline')
-  ON CONFLICT (id) DO NOTHING;
-END $$;
+-- 16. SYSTEM ACCOUNT
+INSERT INTO public.profiles (id, handle, name, bio, avatar_url)
+VALUES ('00000000-0000-0000-0000-000000000000', 'dropaline', 'Drop a Line Network', 'Official relay for the Drop a Line network.', 'https://api.dicebear.com/7.x/shapes/svg?seed=dropaline')
+ON CONFLICT (id) DO NOTHING;
 
 -- 9. Trigger to automatically create a Profile when a User signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
@@ -185,7 +187,6 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 -- 11. AUTOMATIC DROP DISTRIBUTION
--- (Keep existing distribute_drop)
 CREATE OR REPLACE FUNCTION public.distribute_drop()
 RETURNS TRIGGER AS $$
 BEGIN

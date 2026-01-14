@@ -47,8 +47,7 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
                             </div>
                         ) : (
                             drops.map((drop) => {
-                                // Determine printed count (this will be passed correctly from App.tsx)
-                                const printedCount = drop.status === 'printed' ? 1 : 0; // Temporary logic, we'll refine stats in App.tsx
+                                const printedCount = drop.printCount || 0;
 
                                 return (
                                     <div
@@ -159,6 +158,7 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
                                     )}
                                 </div>
                             </div>
+                        </div>
                     </div>
                 )}
             </div>

@@ -10,6 +10,8 @@ interface ReaderViewProps {
   onPrint: (id: string) => void;
   onLike: (id: string) => void;
   onAddComment: (id: string, text: string) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
 }
 
 export const ReaderView: React.FC<ReaderViewProps> = ({
@@ -18,7 +20,9 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
   paperSaver,
   onPrint,
   onLike,
-  onAddComment
+  onAddComment,
+  onLoadMore,
+  hasMore
 }) => {
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
   const [expandedCommentsId, setExpandedCommentsId] = useState<string | null>(null);
@@ -219,6 +223,17 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
             )}
           </div>
         ))}
+
+        {hasMore && (
+          <div className="flex justify-center pt-4 pb-12">
+            <button
+              onClick={onLoadMore}
+              className="px-8 py-3 bg-[#f5f5f7] hover:bg-[#ebebeb] text-[#48484a] rounded-full text-sm font-bold transition-all border border-[#d1d1d6]/50 shadow-sm"
+            >
+              Load more transmissions
+            </button>
+          </div>
+        )}
 
         {drops.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center pt-20">

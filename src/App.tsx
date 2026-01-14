@@ -35,6 +35,8 @@ const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.READER);
   const [drops, setDrops] = useState<Drop[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
+  const [dropsLimit, setDropsLimit] = useState(20);
+  const [hasMoreDrops, setHasMoreDrops] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   // Device & Preference State (Synced to DB)
@@ -70,10 +72,39 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- Data Fetching ---
+  // --- Data Fetching & Realtime ---
   useEffect(() => {
     if (session?.user) {
       fetchData();
+
+      // Subscribe to Realtime changes
+      const channel = supabase
+        .channel('network-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'drops' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'likes' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'comments' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'user_drop_statuses' },
+          () => fetchData()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [session]);
 
@@ -186,11 +217,7 @@ const App: React.FC = () => {
       setCreators(mappedCreators);
     }
 
-    // 3. Fetch Drops (from subscriptions + my own)
-    // In a real app, we'd paginate this.
-    // We also need to fetch likes and comments and user statuses.
-
-    // Simplification: Fetch last 20 drops from people I follow
+    // 3. Fetch Transmissions
     const authorsToFetch = subIds;
 
     const { data: dropsData } = await supabase
@@ -204,9 +231,10 @@ const App: React.FC = () => {
       `)
       .in('author_id', authorsToFetch)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(dropsLimit);
 
     if (dropsData) {
+      setHasMoreDrops(dropsData.length >= dropsLimit);
       const mappedDrops: Drop[] = dropsData.map((d: any) => {
         const myStatus = d.user_drop_statuses.find((s: any) => s.user_id === session.user.id)?.status || 'received';
         const isLiked = d.likes.some((l: any) => l.user_id === session.user.id);
@@ -241,6 +269,16 @@ const App: React.FC = () => {
 
   // --- Persistence ---
   // No longer using local storage, using DB sync
+
+  const handleLoadMore = () => {
+    setDropsLimit(prev => prev + 20);
+  };
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchData();
+    }
+  }, [dropsLimit]);
 
   // --- Actions ---
 
@@ -328,7 +366,7 @@ const App: React.FC = () => {
       `)
       .neq('id', session.user.id)
       .ilike('handle', `%${query.replace('@', '')}%`)
-      .limit(20);
+      .limit(50);
 
     if (error) {
       console.error('Search error', error);
@@ -662,6 +700,8 @@ const App: React.FC = () => {
             onPrint={handlePrintDrop}
             onLike={handleLikeDrop}
             onAddComment={handleAddComment}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMoreDrops}
           />
         );
       case AppView.WRITER:
