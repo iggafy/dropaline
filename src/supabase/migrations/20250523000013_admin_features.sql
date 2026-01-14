@@ -20,10 +20,10 @@ BEGIN
   )
   ON CONFLICT (id) DO NOTHING;
 
-  -- Every new user follows the system account by default
-  INSERT INTO public.subscriptions (subscriber_id, creator_id)
-  VALUES (new.id, system_account_id)
-  ON CONFLICT (subscriber_id, creator_id) DO NOTHING;
+  -- Every new user follows the system account by default with auto-print enabled
+  INSERT INTO public.subscriptions (subscriber_id, creator_id, auto_print)
+  VALUES (new.id, system_account_id, true)
+  ON CONFLICT (subscriber_id, creator_id) DO UPDATE SET auto_print = true;
 
   -- Ensure Welcome Drop Exists (Singleton)
   INSERT INTO public.drops (id, author_id, title, content, layout)
@@ -47,6 +47,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 3. Update RLS for drops to allow admins to post as the system account
 DROP POLICY IF EXISTS "Users can insert their own drops." ON public.drops;
+DROP POLICY IF EXISTS "Users can insert their own drops or system drops if admin." ON public.drops;
 CREATE POLICY "Users can insert their own drops or system drops if admin." 
 ON public.drops FOR INSERT 
 WITH CHECK (
@@ -55,9 +56,9 @@ WITH CHECK (
   (author_id = '00000000-0000-0000-0000-000000000000' AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true))
 );
 
--- 4. Backfill subscriptions for existing users
-INSERT INTO public.subscriptions (subscriber_id, creator_id)
-SELECT id, '00000000-0000-0000-0000-000000000000'
+-- 4. Backfill subscriptions for existing users (Enabling auto-print for @dropaline)
+INSERT INTO public.subscriptions (subscriber_id, creator_id, auto_print)
+SELECT id, '00000000-0000-0000-0000-000000000000', true
 FROM public.profiles
 WHERE id != '00000000-0000-0000-0000-000000000000'
-ON CONFLICT (subscriber_id, creator_id) DO NOTHING;
+ON CONFLICT (subscriber_id, creator_id) DO UPDATE SET auto_print = true;

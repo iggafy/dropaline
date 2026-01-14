@@ -541,17 +541,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </section >
 
-          {/* Update Gateway & Security Handshake */}
+          {/* Software Updates */}
           <section>
             <div className="flex items-center gap-2 mb-4 px-2">
               <RefreshCw size={18} className="text-[var(--text-secondary)]" />
-              <h3 className="text-sm font-bold text-[var(--text-main)]">Update Gateway & Trust</h3>
+              <h3 className="text-sm font-bold text-[var(--text-main)]">Software Updates</h3>
             </div>
             <div className="bg-[var(--card-bg)] p-6 rounded-2xl border border-[var(--border-main)] shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-[var(--text-main)]">Current Version</p>
-                  <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">DROP A LINE V1.0.0 (Public Release)</p>
+                  <p className="text-sm font-medium text-[var(--text-main)]">Application version</p>
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">DROP A LINE V1.0.5</p>
                 </div>
                 <button
                   onClick={async () => {
@@ -570,7 +570,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="p-4 bg-[var(--text-main)]/[0.03] rounded-xl border border-[var(--border-main)]">
                 <div className="flex items-center gap-2 mb-2">
                   <Info size={14} className="text-[var(--accent-blue)]" />
-                  <p className="text-[10px] font-bold text-[var(--text-main)] uppercase tracking-wider">The "Unsigned" Handshake</p>
+                  <p className="text-[10px] font-bold text-[var(--text-main)] uppercase tracking-wider">Independent Software Notice</p>
                 </div>
                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                   Drop a Line is an open-source protocol built for freedom. Because we do not use corporate certificates (Apple/Microsoft), you may see security warnings during installation.

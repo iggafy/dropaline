@@ -1,6 +1,6 @@
 {
   "name": "dropaline",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Writers’ words. Readers’ paper.",
   "homepage": ".",
   "main": "electron/main.js",
@@ -25,7 +25,8 @@
       {
         "provider": "github",
         "owner": "iggafy",
-        "repo": "dropaline"
+        "repo": "dropaline",
+        "releaseType": "release"
       }
     ],
     "directories": {
