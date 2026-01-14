@@ -152,7 +152,7 @@ ON CONFLICT (id) DO NOTHING;
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 DECLARE
-  welcome_drop_id UUID;
+  welcome_drop_id UUID := '00000000-0000-0000-0000-000000000001'; -- Static ID for the Welcome Drop
 BEGIN
   -- Create Profile
   INSERT INTO public.profiles (id, email, handle, name, avatar_url)
@@ -164,18 +164,22 @@ BEGIN
     'https://api.dicebear.com/7.x/shapes/svg?seed=' || new.id
   );
 
-  -- Create Welcome Drop
-  INSERT INTO public.drops (author_id, title, content, layout)
+  -- Ensure Welcome Drop Exists (Idempotent)
+  INSERT INTO public.drops (id, author_id, title, content, layout)
   VALUES (
-    '00000000-0000-0000-0000-000000000000', -- Use system account
+    welcome_drop_id,
+    '00000000-0000-0000-0000-000000000000', -- System account
     'Welcome to Drop a Line',
     'Welcome to the network. This is your first transmission. Connect with others in the Following tab to receive their drops. Every time you publish, it will be relayed to your followers around the world.',
     'classic'
-  ) RETURNING id INTO welcome_drop_id;
+  )
+  ON CONFLICT (id) DO NOTHING;
 
   -- Address the drop to the new user specifically
+  -- Using ON CONFLICT to avoid duplicate entries if the trigger fires multiple times (e.g. on user update)
   INSERT INTO public.user_drop_statuses (user_id, drop_id, status)
-  VALUES (new.id, welcome_drop_id, 'received');
+  VALUES (new.id, welcome_drop_id, 'received')
+  ON CONFLICT (user_id, drop_id) DO NOTHING;
 
   RETURN NEW;
 END;
