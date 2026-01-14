@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
           />
         </div>
         <div className="flex flex-col">
-          <h1 className="text-sm font-semibold text-[#1d1d1f] leading-tight">DropaLine</h1>
+          <h1 className="text-sm font-semibold text-[#1d1d1f] leading-tight">Drop a Line</h1>
           <span className="text-[11px] text-[#86868b] font-medium">@{userProfile.handle}</span>
         </div>
       </div>
