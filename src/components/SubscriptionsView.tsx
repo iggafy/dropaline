@@ -24,7 +24,7 @@ export const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
     onSearch(val);
   };
 
-  const following = creators.filter(c => c.isSubscribed);
+  const following = creators.filter(c => c.isFollowing);
 
   // Search logic: If searching, show all in 'creators' (which App filters for us)
   const searchResults = searchQuery.trim() === '' ? [] : creators;
@@ -34,7 +34,7 @@ export const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
       {/* Header */}
       <header className="h-24 flex flex-col justify-center px-8 border-b border-[#f2f2f2] bg-white z-10 shrink-0">
         <div className="flex flex-col gap-3 max-w-2xl">
-          <h2 className="text-xl font-bold text-[#1d1d1f]">Subscriptions</h2>
+          <h2 className="text-xl font-bold text-[#1d1d1f]">Following</h2>
 
           {/* Search Input */}
           <div className="relative group w-full">
@@ -45,7 +45,7 @@ export const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Enter a handle (e.g. @writer) to connect..."
+              placeholder="Find writers to follow..."
               className="w-full pl-10 pr-10 py-2.5 bg-[#f5f5f7] rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-black/5 transition-all placeholder-[#86868b]"
             />
             {searchQuery && (
@@ -139,7 +139,7 @@ const CreatorCard: React.FC<{ creator: Creator; onToggle: () => void; onToggleAu
     <div className="flex items-center gap-5">
       <div className="relative">
         <img src={creator.avatar} alt={creator.name} className="w-14 h-14 rounded-full border border-[#e5e5e5] object-cover bg-gray-100" />
-        {creator.isSubscribed && (
+        {creator.isFollowing && (
           <div className="absolute -bottom-1 -right-1 bg-green-500 text-white p-0.5 rounded-full border-2 border-white">
             <UserCheck size={10} />
           </div>
@@ -154,7 +154,7 @@ const CreatorCard: React.FC<{ creator: Creator; onToggle: () => void; onToggleAu
         </h4>
         <p className="text-xs text-[#48484a] mt-1 line-clamp-1 max-w-[200px] sm:max-w-xs">{creator.bio}</p>
         <div className="flex items-center gap-3 mt-2">
-          <span className="text-[10px] font-medium text-[#86868b]">{creator.subscriberCount.toLocaleString()} subscribers</span>
+          <span className="text-[10px] font-medium text-[#86868b]">{creator.followerCount.toLocaleString()} followers</span>
         </div>
       </div>
     </div>
@@ -164,8 +164,8 @@ const CreatorCard: React.FC<{ creator: Creator; onToggle: () => void; onToggleAu
         <button
           onClick={onToggleAutoPrint}
           className={`p-2 rounded-full transition-all border ${creator.autoPrint
-              ? 'bg-green-500 text-white border-green-600 shadow-md'
-              : 'bg-white text-[#86868b] border-[#e5e5e5] hover:bg-[#f5f5f7]'
+            ? 'bg-green-500 text-white border-green-600 shadow-md'
+            : 'bg-white text-[#86868b] border-[#e5e5e5] hover:bg-[#f5f5f7]'
             }`}
           title={creator.autoPrint ? "Auto-print enabled" : "Enable auto-print"}
         >
@@ -175,12 +175,12 @@ const CreatorCard: React.FC<{ creator: Creator; onToggle: () => void; onToggleAu
 
       <button
         onClick={onToggle}
-        className={`px-5 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 ${creator.isSubscribed
-            ? 'bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e5e5e5] border border-transparent'
-            : 'bg-black text-white hover:bg-black/80 hover:scale-105 shadow-lg shadow-black/10'
+        className={`px-5 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 ${creator.isFollowing
+          ? 'bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e5e5e5] border border-transparent'
+          : 'bg-black text-white hover:bg-black/80 hover:scale-105 shadow-lg shadow-black/10'
           }`}
       >
-        {creator.isSubscribed ? 'Following' : 'Follow'}
+        {creator.isFollowing ? 'Following' : 'Follow'}
       </button>
     </div>
   </div>

@@ -1,7 +1,57 @@
 
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const isDev = !app.isPackaged;
+
+Menu.setApplicationMenu(null);
+
+
+ipcMain.handle('get-printers', async () => {
+  const win = new BrowserWindow({ show: false });
+  const printers = await win.webContents.getPrintersAsync();
+  win.close();
+  return printers;
+});
+
+ipcMain.on('print-document', (event, { html, printerName }) => {
+  let printWindow = new BrowserWindow({ show: false });
+  printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURI(html)}`);
+
+  printWindow.webContents.on('did-finish-load', () => {
+    printWindow.webContents.print({
+      silent: true,
+      printBackground: true,
+      deviceName: printerName || ''
+    }, (success, failureReason) => {
+      if (!success) console.log('Print failed', failureReason);
+      printWindow.close();
+      printWindow = null;
+    });
+  });
+});
+
+ipcMain.handle('print-to-pdf', async (event, html) => {
+  const win = new BrowserWindow({ show: false });
+  await win.loadURL(`data:text/html;charset=utf-8,${encodeURI(html)}`);
+  const data = await win.webContents.printToPDF({
+    printBackground: true,
+    pageSize: 'A4',
+    margins: { top: 0, bottom: 0, left: 0, right: 0 }
+  });
+  win.close();
+
+  const { filePath } = await require('electron').dialog.showSaveDialog({
+    buttonLabel: 'Save PDF',
+    defaultPath: `dropaline-${Date.now()}.pdf`,
+    filters: [{ name: 'Adobe PDF', extensions: ['pdf'] }]
+  });
+
+  if (filePath) {
+    await require('fs').promises.writeFile(filePath, data);
+    return true;
+  }
+  return false;
+});
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -9,6 +59,7 @@ function createWindow() {
     height: 800,
     minWidth: 1024,
     minHeight: 768,
+    title: 'DropaLine | Indie Stories. Fresh Ink. Real Paper.',
     titleBarStyle: 'hiddenInset', // Mac style integrated title bar
     webPreferences: {
       nodeIntegration: false,

@@ -7,12 +7,13 @@ import { WriterView } from './components/WriterView';
 import { SubscriptionsView } from './components/SubscriptionsView';
 import { SettingsView } from './components/SettingsView';
 import { AuthView } from './components/AuthView';
+import { MyDropsView } from './components/MyDropsView';
 import { AppView, Drop, PrinterState, UserProfile, Creator, Comment } from './types';
 
 // Initial Device State (Local Only)
 const INITIAL_PRINTER: PrinterState = {
-  isConnected: true,
-  name: 'HP LaserJet Pro (Office)',
+  isConnected: false,
+  name: 'Searching for Printers...',
   isPrinting: false
 };
 
@@ -36,12 +37,13 @@ const App: React.FC = () => {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // Local Settings
-  const [paperSaver, setPaperSaver] = useState<boolean>(() => loadFromStorage('dropaline_saver', false));
-  const [printer, setPrinter] = useState<PrinterState>(() => loadFromStorage('dropaline_printer', INITIAL_PRINTER));
-  const [batching, setBatching] = useState<string>(() => loadFromStorage('dropaline_batch_mode', 'Instant'));
-  const [customDate, setCustomDate] = useState<string>(() => loadFromStorage('dropaline_batch_date', ''));
-  const [customTime, setCustomTime] = useState<string>(() => loadFromStorage('dropaline_batch_time', ''));
+  // Device & Preference State (Synced to DB)
+  const [paperSaver, setPaperSaver] = useState<boolean>(false);
+  const [printer, setPrinter] = useState<PrinterState>(INITIAL_PRINTER);
+  const [availablePrinters, setAvailablePrinters] = useState<any[]>([]);
+  const [batching, setBatching] = useState<string>('Instant');
+  const [customDate, setCustomDate] = useState<string>('');
+  const [customTime, setCustomTime] = useState<string>('');
 
   // --- Auth & Init ---
   useEffect(() => {
@@ -54,6 +56,17 @@ const App: React.FC = () => {
       setSession(session);
     });
 
+    // Fetch available hardware printers (if in Electron)
+    if ((window as any).electron) {
+      (window as any).electron.getPrinters().then((list: any[]) => {
+        setAvailablePrinters(list);
+        const defaultPrinter = list.find(p => p.isDefault) || list[0];
+        if (defaultPrinter) {
+          setPrinter(prev => ({ ...prev, name: defaultPrinter.name }));
+        }
+      });
+    }
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -62,6 +75,53 @@ const App: React.FC = () => {
     if (session?.user) {
       fetchData();
     }
+  }, [session]);
+
+  // --- Auto-Batch Release Engine ---
+  useEffect(() => {
+    if (!session?.user || batching === 'Instant') return;
+
+    const checkInterval = setInterval(() => {
+      const now = new Date();
+      let shouldRelease = false;
+
+      if (batching === 'Daily') {
+        // Release if it's 8 AM or later
+        if (now.getHours() >= 8) shouldRelease = true;
+      } else if (batching === 'Weekly') {
+        // Release on Sundays
+        if (now.getDay() === 0) shouldRelease = true;
+      } else if (batching === 'Custom' && customDate && customTime) {
+        // Release if current time is >= custom set point
+        const releasePoint = new Date(`${customDate}T${customTime}`);
+        if (now >= releasePoint) shouldRelease = true;
+      }
+
+      if (shouldRelease) {
+        const hasQueued = drops.some(d => d.status === 'queued');
+        if (hasQueued) {
+          processBatch();
+        }
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(checkInterval);
+  }, [session, batching, customDate, customTime, drops]);
+
+  // Realtime Listeners
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const channel = supabase.channel('app_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'drops' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_drop_statuses' }, () => fetchData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [session]);
 
   const fetchData = async () => {
@@ -75,17 +135,25 @@ const App: React.FC = () => {
       .single();
 
     if (profile) {
-      setUserProfile({
+      const p: UserProfile = {
         id: profile.id,
         name: profile.name,
         handle: profile.handle,
         bio: profile.bio || '',
-        avatar: profile.avatar_url
-      });
+        avatar: profile.avatar_url,
+        batchMode: profile.batch_mode,
+        batchDate: profile.batch_date,
+        batchTime: profile.batch_time,
+        paperSaver: profile.paper_saver
+      };
+      setUserProfile(p);
+      setPaperSaver(p.paperSaver || false);
+      setBatching(p.batchMode || 'Instant');
+      setCustomDate(p.batchDate || '');
+      setCustomTime(p.batchTime || '');
     }
 
     // 2. Fetch Subscriptions & Creators
-    // First get who I follow
     const { data: subs } = await supabase
       .from('subscriptions')
       .select('creator_id, auto_print')
@@ -94,22 +162,25 @@ const App: React.FC = () => {
     const subIds = subs?.map(s => s.creator_id) || [];
     const subMap = new Map(subs?.map(s => [s.creator_id, s.auto_print]));
 
-    // Get all profiles (for subscription discovery) - limiting to 50 for prototype
+    // Get profiles with real stats
     const { data: allProfiles } = await supabase
       .from('profiles')
-      .select('*')
-      .neq('id', session.user.id) // Don't show myself
+      .select(`
+        *,
+        creator_stats (subscriber_count)
+      `)
+      .neq('id', session.user.id)
       .limit(50);
 
     if (allProfiles) {
-      const mappedCreators: Creator[] = allProfiles.map(p => ({
+      const mappedCreators: Creator[] = allProfiles.map((p: any) => ({
         id: p.id,
         name: p.name,
         handle: p.handle,
         bio: p.bio || '',
         avatar: p.avatar_url,
-        subscriberCount: Math.floor(Math.random() * 1000) + 10, // Mock count for now as count needs aggregate query
-        isSubscribed: subIds.includes(p.id),
+        followerCount: p.creator_stats?.[0]?.subscriber_count || 0,
+        isFollowing: subIds.includes(p.id),
         autoPrint: subMap.get(p.id) || false
       }));
       setCreators(mappedCreators);
@@ -139,6 +210,7 @@ const App: React.FC = () => {
       const mappedDrops: Drop[] = dropsData.map((d: any) => {
         const myStatus = d.user_drop_statuses.find((s: any) => s.user_id === session.user.id)?.status || 'received';
         const isLiked = d.likes.some((l: any) => l.user_id === session.user.id);
+        const printCount = d.user_drop_statuses.filter((s: any) => s.status === 'printed').length;
 
         return {
           id: d.id,
@@ -151,6 +223,7 @@ const App: React.FC = () => {
           layout: d.layout,
           likes: d.likes.length,
           liked: isLiked,
+          printCount,
           comments: d.comments.length,
           commentList: d.comments.map((c: any) => ({
             id: c.id,
@@ -165,25 +238,7 @@ const App: React.FC = () => {
   };
 
   // --- Persistence ---
-  useEffect(() => {
-    localStorage.setItem('dropaline_saver', JSON.stringify(paperSaver));
-  }, [paperSaver]);
-
-  useEffect(() => {
-    localStorage.setItem('dropaline_printer', JSON.stringify(printer));
-  }, [printer]);
-
-  useEffect(() => {
-    localStorage.setItem('dropaline_batch_mode', JSON.stringify(batching));
-  }, [batching]);
-
-  useEffect(() => {
-    localStorage.setItem('dropaline_batch_date', JSON.stringify(customDate));
-  }, [customDate]);
-
-  useEffect(() => {
-    localStorage.setItem('dropaline_batch_time', JSON.stringify(customTime));
-  }, [customTime]);
+  // No longer using local storage, using DB sync
 
   // --- Actions ---
 
@@ -196,6 +251,11 @@ const App: React.FC = () => {
         name: updatedProfile.name,
         handle: updatedProfile.handle,
         bio: updatedProfile.bio,
+        batch_mode: updatedProfile.batchMode,
+        batch_date: updatedProfile.batchDate,
+        batch_time: updatedProfile.batchTime,
+        paper_saver: updatedProfile.paperSaver,
+        avatar_url: updatedProfile.avatar
       })
       .eq('id', session.user.id);
 
@@ -212,11 +272,11 @@ const App: React.FC = () => {
 
     const fileExt = file.name.split('.').pop();
     const fileName = `${session.user.id}-${Math.random()}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
+    const filePath = fileName;
 
     // 1. Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
-      .from('media') // Assuming 'media' bucket exists
+      .from('avatars')
       .upload(filePath, file);
 
     if (uploadError) {
@@ -226,7 +286,7 @@ const App: React.FC = () => {
 
     // 2. Get Public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('media')
+      .from('avatars')
       .getPublicUrl(filePath);
 
     // 3. Update Profile
@@ -243,7 +303,10 @@ const App: React.FC = () => {
 
     const { data: results, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select(`
+        *,
+        creator_stats (subscriber_count)
+      `)
       .neq('id', session.user.id)
       .ilike('handle', `%${query.replace('@', '')}%`)
       .limit(20);
@@ -254,7 +317,6 @@ const App: React.FC = () => {
     }
 
     if (results) {
-      // Get current subscriptions to mark isSubscribed
       const { data: subs } = await supabase
         .from('subscriptions')
         .select('creator_id, auto_print')
@@ -263,14 +325,14 @@ const App: React.FC = () => {
       const subIds = subs?.map(s => s.creator_id) || [];
       const subMap = new Map(subs?.map(s => [s.creator_id, s.auto_print]));
 
-      const mapped = results.map(p => ({
+      const mapped = results.map((p: any) => ({
         id: p.id,
         name: p.name,
         handle: p.handle,
         bio: p.bio || '',
         avatar: p.avatar_url,
-        subscriberCount: 0, // Mock or secondary query
-        isSubscribed: subIds.includes(p.id),
+        followerCount: p.creator_stats?.[0]?.subscriber_count || 0,
+        isFollowing: subIds.includes(p.id),
         autoPrint: subMap.get(p.id) || false
       }));
       setCreators(mapped);
@@ -278,27 +340,110 @@ const App: React.FC = () => {
   };
 
   const handlePrintDrop = async (dropId: string) => {
+    const drop = drops.find(d => d.id === dropId);
+    if (!drop) return;
+
     setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: dropId }));
 
-    // Simulate print time then update DB
-    setTimeout(async () => {
-      // Update local state
-      setDrops(prev => prev.map(d => d.id === dropId ? { ...d, status: 'printed' } : d));
-      setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
+    // Generate HTML for printing (A4 Compatible & Thermal Optimized)
+    const printHtml = `
+      <html>
+        <head>
+          <style>
+            @page { margin: 0; }
+            body { 
+              margin: 0; 
+              padding: 0; 
+              background: white; 
+              display: flex; 
+              justify-content: center;
+              -webkit-print-color-adjust: exact;
+            }
+            .paper {
+              width: 100%;
+              max-width: ${paperSaver ? '350px' : '450px'};
+              min-height: 100vh;
+              padding: ${paperSaver ? '30px 20px' : '60px 40px'};
+              font-family: ${drop.layout === 'zine' ? '"Courier New", Courier, monospace' : 'Georgia, serif'};
+              background: white;
+              box-sizing: border-box;
+            }
+            .title {
+              text-align: center;
+              text-transform: uppercase;
+              font-size: ${paperSaver ? '20px' : '28px'};
+              margin-bottom: 10px;
+              letter-spacing: 2px;
+              font-weight: bold;
+            }
+            .divider {
+              border-top: 2px solid black;
+              margin: 20px 0;
+            }
+            .content {
+              font-size: ${paperSaver ? '13px' : '16px'};
+              line-height: ${paperSaver ? '1.3' : '1.7'};
+              color: #1a1a1a;
+              white-space: pre-wrap;
+              word-wrap: break-word;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 0.5px solid #eee;
+              font-size: 10px;
+              text-align: center;
+              color: #888;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="paper">
+            <div class="title">${drop.title}</div>
+            <div class="divider"></div>
+            <p style="font-style: italic; margin-bottom: 25px;">Published by @${drop.authorHandle}</p>
+            <div class="content">${drop.content}</div>
+            <div class="divider" style="margin-top: 40px; border-top-width: 1px;"></div>
+            <div class="footer">
+              Printed via DropaLine Output Gateway<br/>
+              ${new Date().toLocaleDateString()} • ${new Date().toLocaleTimeString()}
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
 
-      // Update Supabase
-      if (session?.user) {
-        const { error } = await supabase
-          .from('user_drop_statuses')
-          .upsert({
-            user_id: session.user.id,
-            drop_id: dropId,
-            status: 'printed'
-          }, { onConflict: 'user_id, drop_id' });
-
-        if (error) console.error('Failed to update print status', error);
+    // 1. Send to real Electron Output (PDF or Hardware)
+    if ((window as any).electron) {
+      if (printer.name === 'SAVE_AS_PDF') {
+        const success = await (window as any).electron.saveToPDF(printHtml);
+        if (!success) {
+          setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
+          return; // User cancelled save dialog
+        }
+      } else {
+        (window as any).electron.print({ html: printHtml, printerName: printer.name });
       }
-    }, 3000);
+    }
+
+    // 2. Update status in DB
+    if (session?.user) {
+      const { error } = await supabase
+        .from('user_drop_statuses')
+        .upsert({
+          user_id: session.user.id,
+          drop_id: dropId,
+          status: 'printed'
+        }, { onConflict: 'user_id, drop_id' });
+
+      if (error) console.error('Failed to update print status', error);
+    }
+
+    // Update local state
+    setDrops(prev => prev.map(d => d.id === dropId ? { ...d, status: 'printed' } : d));
+    setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
   };
 
   const handleLikeDrop = async (dropId: string) => {
@@ -389,14 +534,14 @@ const App: React.FC = () => {
     const creator = creators.find(c => c.id === creatorId);
     if (!creator) return;
 
-    const willSubscribe = !creator.isSubscribed;
+    const willFollow = !creator.isFollowing;
 
     // Optimistic
     setCreators(prev => prev.map(c =>
-      c.id === creatorId ? { ...c, isSubscribed: willSubscribe } : c
+      c.id === creatorId ? { ...c, isFollowing: willFollow } : c
     ));
 
-    if (willSubscribe) {
+    if (willFollow) {
       await supabase.from('subscriptions').insert({ subscriber_id: session.user.id, creator_id: creatorId });
     } else {
       await supabase.from('subscriptions').delete().match({ subscriber_id: session.user.id, creator_id: creatorId });
@@ -440,31 +585,36 @@ const App: React.FC = () => {
     };
   }, [session]);
 
-  const processBatch = () => {
-    // In a real backend scenario, this would likely update statuses in DB from 'queued' to 'received'/'printed'.
-    // For now, we simulate locally.
+  const processBatch = async () => {
     const queuedDrops = drops.filter(d => d.status === 'queued');
     if (queuedDrops.length === 0) return;
 
     setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: 'Batch Release' }));
 
-    setTimeout(async () => {
-      // Update DB statuses
-      const updates = queuedDrops.map(d => {
-        return supabase
-          .from('user_drop_statuses')
-          .upsert({ user_id: session.user.id, drop_id: d.id, status: 'received' }, { onConflict: 'user_id, drop_id' });
-      });
+    // 1. Update all queued drops to received/printed in DB
+    const { error } = await supabase
+      .from('user_drop_statuses')
+      .update({ status: 'received' })
+      .eq('user_id', session?.user.id)
+      .eq('status', 'queued');
 
-      await Promise.all(updates);
-      fetchData(); // Refresh UI
+    if (error) {
+      console.error('Batch process failed', error);
+    } else {
+      // 2. Refresh UI
+      fetchData();
+    }
 
-      setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
-    }, 2000);
+    setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
   };
 
   if (loading) {
-    return <div className="h-screen flex items-center justify-center bg-[#f5f5f7]">Loading DropaLine...</div>;
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-[#f5f5f7]">
+        <div className="w-12 h-12 border-4 border-black/10 border-t-black rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-bold text-[#1d1d1f] uppercase tracking-widest animate-pulse">Syncing Gateway...</p>
+      </div>
+    );
   }
 
   if (!session) {
@@ -472,7 +622,12 @@ const App: React.FC = () => {
   }
 
   if (!userProfile) {
-    return <div className="h-screen flex items-center justify-center">Setting up profile...</div>;
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-[#f5f5f7]">
+        <div className="w-12 h-12 border-4 border-black/10 border-t-black rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-bold text-[#1d1d1f] uppercase tracking-widest animate-pulse">Initialising Profile...</p>
+      </div>
+    );
   }
 
   const renderView = () => {
@@ -486,7 +641,6 @@ const App: React.FC = () => {
             onPrint={handlePrintDrop}
             onLike={handleLikeDrop}
             onAddComment={handleAddComment}
-            onSimulateDrop={fetchData}
           />
         );
       case AppView.WRITER:
@@ -496,7 +650,7 @@ const App: React.FC = () => {
             onPublish={handlePublishDrop}
           />
         );
-      case AppView.SUBSCRIPTIONS:
+      case AppView.FOLLOWING:
         return (
           <SubscriptionsView
             creators={creators}
@@ -505,22 +659,42 @@ const App: React.FC = () => {
             onSearch={handleSearchCreators}
           />
         );
+      case AppView.MY_DROPS:
+        return (
+          <MyDropsView
+            drops={drops.filter(d => d.authorHandle === userProfile?.handle)}
+            onReply={handleAddComment}
+          />
+        );
       case AppView.SETTINGS:
         return (
           <SettingsView
+            availablePrinters={availablePrinters}
             printer={printer}
             setPrinter={setPrinter}
             userProfile={userProfile}
             onProfileUpdate={handleProfileUpdate}
             onAvatarUpload={handleAvatarUpload}
             paperSaver={paperSaver}
-            setPaperSaver={setPaperSaver}
+            setPaperSaver={(val) => {
+              setPaperSaver(val);
+              handleProfileUpdate({ ...userProfile, paperSaver: val } as UserProfile);
+            }}
             batching={batching}
-            setBatching={setBatching}
+            setBatching={(val) => {
+              setBatching(val);
+              handleProfileUpdate({ ...userProfile, batchMode: val as any } as UserProfile);
+            }}
             customDate={customDate}
-            setCustomDate={setCustomDate}
+            setCustomDate={(val) => {
+              setCustomDate(val);
+              handleProfileUpdate({ ...userProfile, batchDate: val } as UserProfile);
+            }}
             customTime={customTime}
-            setCustomTime={setCustomTime}
+            setCustomTime={(val) => {
+              setCustomTime(val);
+              handleProfileUpdate({ ...userProfile, batchTime: val } as UserProfile);
+            }}
             onProcessBatch={processBatch}
           />
         );

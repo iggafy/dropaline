@@ -2,16 +2,24 @@
 export enum AppView {
   READER = 'reader',
   WRITER = 'writer',
-  SUBSCRIPTIONS = 'subscriptions',
+  FOLLOWING = 'following',
+  MY_DROPS = 'my_drops',
   SETTINGS = 'settings'
 }
 
 export interface UserProfile {
   id: string;
+  email?: string;
   name: string;
   handle: string;
   bio: string;
   avatar: string;
+
+  // Preferences
+  batchMode?: 'Instant' | 'Daily' | 'Weekly' | 'Custom';
+  batchDate?: string;
+  batchTime?: string;
+  paperSaver?: boolean;
 }
 
 export interface Comment {
@@ -34,6 +42,7 @@ export interface Drop {
   likes: number;
   liked: boolean;
   comments: number;
+  printCount?: number;
   commentList?: Comment[];
 }
 
@@ -42,8 +51,8 @@ export interface Creator {
   name: string;
   handle: string;
   bio: string;
-  subscriberCount: number;
-  isSubscribed: boolean;
+  followerCount: number;
+  isFollowing: boolean;
   autoPrint: boolean;
   avatar: string;
 }

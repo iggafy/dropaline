@@ -153,7 +153,7 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
             <div className={`max-w-3xl mx-auto h-full flex flex-col ${getLayoutClasses(currentLayout)}`}>
               <input
                 type="text"
-                placeholder="Untitled Drop"
+                placeholder="Title your drop..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-4xl font-bold text-[#1d1d1f] placeholder-[#d1d1d6] w-full border-none focus:outline-none bg-transparent mb-8"
@@ -161,7 +161,7 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Start writing your next physical drop..."
+                placeholder="Begin your transmission..."
                 className="flex-1 w-full text-lg text-[#1d1d1f] leading-relaxed resize-none focus:outline-none bg-transparent placeholder-[#d1d1d6]/50"
               />
             </div>

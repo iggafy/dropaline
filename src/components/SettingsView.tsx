@@ -19,6 +19,7 @@ interface SettingsViewProps {
   customTime: string;
   setCustomTime: (value: string) => void;
   onProcessBatch: () => void;
+  availablePrinters?: any[];
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -35,7 +36,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   setCustomDate,
   customTime,
   setCustomTime,
-  onProcessBatch
+  onProcessBatch,
+  availablePrinters = []
 }) => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -167,16 +169,59 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <h3 className="text-sm font-bold text-[#1d1d1f]">Local Printer Connection</h3>
             </div>
             <div className="bg-white p-6 rounded-2xl border border-[#e5e5e5] shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <p className="text-sm font-semibold text-[#1d1d1f]">{printer.name}</p>
+                  <p className="text-sm font-semibold text-[#1d1d1f]">{printer.name || 'No printer selected'}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`w-1.5 h-1.5 rounded-full ${printer.isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
                     <p className="text-xs text-[#86868b]">{printer.isConnected ? 'Ready to print' : 'Offline'}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-[#f5f5f7] rounded-full text-[10px] font-bold text-[#86868b] border border-[#ebebeb]">
-                  DEFAULT
+                <div className="flex items-center gap-2 px-3 py-1 bg-black text-white rounded-full text-[10px] font-bold border border-black uppercase tracking-widest">
+                  {printer.name === 'SAVE_AS_PDF' ? 'Digital PDF' : 'Active Device'}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-[10px] font-bold text-[#86868b] uppercase tracking-wider">Select Output Device</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {/* PDF OPTION */}
+                  <button
+                    onClick={() => setPrinter({ ...printer, name: 'SAVE_AS_PDF', isConnected: true })}
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all text-left ${printer.name === 'SAVE_AS_PDF'
+                      ? 'bg-[#f0f7ff] border-[#0066cc] ring-1 ring-[#0066cc]'
+                      : 'bg-[#f5f5f7] border-transparent hover:border-[#d1d1d6]'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Cloud size={16} className={printer.name === 'SAVE_AS_PDF' ? 'text-[#0066cc]' : 'text-[#86868b]'} />
+                      <div>
+                        <p className={`text-xs font-bold ${printer.name === 'SAVE_AS_PDF' ? 'text-[#0066cc]' : 'text-[#1d1d1f]'}`}>Digital PDF</p>
+                        <p className="text-[10px] text-[#86868b]">Opens system save dialog</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* HARDWARE PRINTERS */}
+                  {availablePrinters.map((p) => (
+                    <button
+                      key={p.name}
+                      onClick={() => setPrinter({ ...printer, name: p.name, isConnected: true })}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all text-left ${printer.name === p.name
+                        ? 'bg-[#f0f7ff] border-[#0066cc] ring-1 ring-[#0066cc]'
+                        : 'bg-[#f5f5f7] border-transparent hover:border-[#d1d1d6]'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Printer size={16} className={printer.name === p.name ? 'text-[#0066cc]' : 'text-[#86868b]'} />
+                        <div>
+                          <p className={`text-xs font-bold ${printer.name === p.name ? 'text-[#0066cc]' : 'text-[#1d1d1f]'}`}>{p.name}</p>
+                          <p className="text-[10px] text-[#86868b]">{p.status === 0 ? 'Ready' : 'In Use'}</p>
+                        </div>
+                      </div>
+                      {p.isDefault && <span className="text-[10px] font-bold text-[#86868b] bg-white px-2 py-0.5 rounded border border-[#d1d1d6]">SYSTEM DEFAULT</span>}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -277,12 +322,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <Shield size={18} className="text-[#86868b]" />
               <h3 className="text-sm font-bold text-[#1d1d1f]">Privacy & Security</h3>
             </div>
-            <div className="bg-[#fff1f0] p-5 rounded-2xl border border-[#ffdcd9] flex gap-4">
-              <Shield size={20} className="text-red-500 shrink-0 mt-0.5" />
+            <div className="bg-[#f0f7ff] p-5 rounded-2xl border border-[#0066cc]/20 flex gap-4">
+              <Shield size={20} className="text-[#0066cc] shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-red-700 mb-1">End-to-End Encryption Active</h4>
-                <p className="text-[11px] text-red-600/80 leading-relaxed font-medium">
-                  Your printer's address is hidden behind our relay. Only creators you strictly allow can send data packets to your device.
+                <h4 className="text-xs font-bold text-[#0066cc] mb-1">Secure Relay Active</h4>
+                <p className="text-[11px] text-[#0066cc]/80 leading-relaxed font-medium">
+                  Your physical location and IP are hidden behind the DropaLine bridge. Only your followed network can transmit data packets to your hardware gateway.
                 </p>
               </div>
             </div>

@@ -76,7 +76,7 @@ export const AuthView: React.FC = () => {
                 <span className="absolute left-3 top-3 text-[#86868b] text-xs font-bold">@</span>
                 <input
                   type="text"
-                  placeholder="Handle (e.g. poet_doe)"
+                  placeholder="Handle (e.g. your_handle)"
                   value={handle}
                   onChange={(e) => setHandle(e.target.value)}
                   className="w-full pl-8 pr-4 py-2.5 bg-[#f5f5f7] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
@@ -116,9 +116,9 @@ export const AuthView: React.FC = () => {
             className="w-full bg-black text-white py-2.5 rounded-lg text-sm font-bold hover:bg-black/80 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
           >
             {loading ? <Loader size={16} className="animate-spin" /> : (
-                <>
-                 {isLogin ? 'Sign In' : 'Join the Network'} <ArrowRight size={16} />
-                </>
+              <>
+                {isLogin ? 'Sign In' : 'Join the Network'} <ArrowRight size={16} />
+              </>
             )}
           </button>
         </form>

@@ -1,7 +1,8 @@
 
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electron', {
-  // Expose specific electron APIs if needed in the future
-  // For now, Supabase works over standard HTTP/WebSocket so no special bridge is required
+  print: (data) => ipcRenderer.send('print-document', data),
+  getPrinters: () => ipcRenderer.invoke('get-printers'),
+  saveToPDF: (html) => ipcRenderer.invoke('print-to-pdf', html)
 });
