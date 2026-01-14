@@ -1,6 +1,6 @@
 {
   "name": "dropaline",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The physical internet for writers and readers.",
   "homepage": ".",
   "main": "electron/main.js",
