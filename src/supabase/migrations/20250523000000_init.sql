@@ -140,6 +140,12 @@ BEGIN
     CREATE POLICY "Users can update own statuses." ON public.user_drop_statuses FOR UPDATE USING (auth.uid() = user_id);
 END $$;
 
+  -- 16. SYSTEM ACCOUNT
+  INSERT INTO public.profiles (id, handle, name, bio, avatar_url)
+  VALUES ('00000000-0000-0000-0000-000000000000', 'dropaline', 'Drop a Line Network', 'Official relay for the Drop a Line network.', 'https://api.dicebear.com/7.x/shapes/svg?seed=dropaline')
+  ON CONFLICT (id) DO NOTHING;
+END $$;
+
 -- 9. Trigger to automatically create a Profile when a User signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
@@ -159,17 +165,17 @@ BEGIN
   -- Create Welcome Drop
   INSERT INTO public.drops (author_id, title, content, layout)
   VALUES (
-    new.id,
-    'Welcome to DropaLine',
-    'This is your first drop. Connect with others in the Following tab to receive their drops in your inbox. Every time you publisher, it will be relayed to your followers around the world.',
+    '00000000-0000-0000-0000-000000000000', -- Use system account
+    'Welcome to Drop a Line',
+    'Welcome to the network. This is your first transmission. Connect with others in the Following tab to receive their drops. Every time you publish, it will be relayed to your followers around the world.',
     'classic'
   ) RETURNING id INTO welcome_drop_id;
 
-  -- Ensure it shows in the author''s own inbox
+  -- Address the drop to the new user specifically
   INSERT INTO public.user_drop_statuses (user_id, drop_id, status)
   VALUES (new.id, welcome_drop_id, 'received');
 
-  RETURN new;
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

@@ -244,7 +244,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
 
             <div className="flex-1 overflow-y-auto p-12 md:p-16">
               <div className={`text-[10px] text-[#86868b] uppercase tracking-tighter border-b border-[#d1d1d6] pb-1 mb-12 flex justify-between ${selectedDrop.layout === 'zine' ? 'border-dashed' : ''}`}>
-                <span>DropaLine Network</span>
+                <span>Drop a Line Network</span>
                 <span>{new Date(selectedDrop.timestamp).toLocaleDateString()}</span>
               </div>
 

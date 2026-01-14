@@ -114,20 +114,13 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
                                 </button>
                                 <h3 className="text-sm font-bold text-[#1d1d1f] truncate max-w-[200px]">{selectedDrop.title}</h3>
                             </div>
-                            <button className="p-1.5 text-[#86868b] hover:text-[#1d1d1f] rounded-lg">
-                                <MoreVertical size={16} />
-                            </button>
                         </header>
 
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                             {/* Analytics Summary */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1">
                                 <div className="bg-white p-4 rounded-xl border border-[#e5e5e5] shadow-sm">
-                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-1">Impact Radius</p>
-                                    <p className="text-lg font-bold text-[#1d1d1f]">{(selectedDrop.likes + selectedDrop.comments) * 12}%</p>
-                                </div>
-                                <div className="bg-white p-4 rounded-xl border border-[#e5e5e5] shadow-sm">
-                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-1">Local Reach</p>
+                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-1">Personal Reach</p>
                                     <p className="text-lg font-bold text-[#1d1d1f]">{selectedDrop.likes + 1} devices</p>
                                 </div>
                             </div>
@@ -166,26 +159,6 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply }) => {
                                     )}
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Reply Input */}
-                        <div className="p-6 bg-white border-t border-[#f2f2f2]">
-                            <form onSubmit={handleReply} className="relative">
-                                <textarea
-                                    value={replyText}
-                                    onChange={(e) => setReplyText(e.target.value)}
-                                    placeholder="Send a direct transmission back..."
-                                    className="w-full bg-[#f5f5f7] rounded-2xl p-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[#0066cc] min-h-[100px] resize-none"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={!replyText.trim()}
-                                    className="absolute right-3 bottom-3 p-2 bg-black text-white rounded-full hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                                >
-                                    <Send size={16} />
-                                </button>
-                            </form>
-                        </div>
                     </div>
                 )}
             </div>

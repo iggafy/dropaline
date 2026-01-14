@@ -164,7 +164,7 @@ const CreatorCard: React.FC<{ creator: Creator; onToggle: () => void; onToggleAu
     </div>
 
     <div className="flex items-center gap-2">
-      {creator.isSubscribed && (
+      {creator.isFollowing && (
         <button
           onClick={onToggleAutoPrint}
           className={`p-2 rounded-full transition-all border ${creator.autoPrint

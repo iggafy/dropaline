@@ -134,7 +134,7 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile }
           {isPreviewMode ? (
             <div className={`max-w-2xl mx-auto bg-white aspect-[1/1.41] shadow-2xl p-16 border border-[#e5e5e5] relative flex flex-col ${getLayoutClasses(currentLayout)}`}>
               <div className={`absolute top-8 left-8 text-[10px] text-[#86868b] uppercase tracking-tighter border-b border-[#d1d1d6] pb-1 w-full max-w-[calc(100%-64px)] ${currentLayout === 'zine' ? 'border-dashed' : ''}`}>
-                DropaLine Network • {new Date().toLocaleDateString()}
+                Drop a Line Network • {new Date().toLocaleDateString()}
               </div>
 
               <h1 className={`text-3xl text-center mt-12 mb-8 ${currentLayout === 'zine' ? 'font-black uppercase tracking-tighter' : 'font-bold'}`}>

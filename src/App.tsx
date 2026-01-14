@@ -190,8 +190,8 @@ const App: React.FC = () => {
     // In a real app, we'd paginate this.
     // We also need to fetch likes and comments and user statuses.
 
-    // Simplification: Fetch last 20 drops from people I follow OR myself
-    const authorsToFetch = [...subIds, session.user.id];
+    // Simplification: Fetch last 20 drops from people I follow
+    const authorsToFetch = subIds;
 
     const { data: dropsData } = await supabase
       .from('drops')
@@ -199,7 +199,7 @@ const App: React.FC = () => {
         *,
         profiles:author_id (name, handle, avatar_url),
         likes (user_id),
-        comments (id, text, created_at, profiles (handle, name)),
+        comments (id, text, created_at, profiles (handle, name, avatar_url)),
         user_drop_statuses (status)
       `)
       .in('author_id', authorsToFetch)
@@ -417,6 +417,7 @@ const App: React.FC = () => {
               letter-spacing: 1px;
             }
           </style>
+          <title>Drop a Line</title>
         </head>
         <body>
           <div class="paper">
@@ -426,7 +427,7 @@ const App: React.FC = () => {
             <div class="content">${drop.content}</div>
             <div class="divider" style="margin-top: 40px; border-top-width: 1px;"></div>
             <div class="footer">
-              Printed via DropaLine Output Gateway<br/>
+              Printed via Drop a Line Output Gateway<br/>
               ${new Date().toLocaleDateString()} • ${new Date().toLocaleTimeString()}
             </div>
           </div>
@@ -437,7 +438,8 @@ const App: React.FC = () => {
     // 1. Send to real Electron Output (PDF or Hardware)
     if ((window as any).electron) {
       if (printer.name === 'SAVE_AS_PDF') {
-        const success = await (window as any).electron.saveToPDF(printHtml);
+        const filename = `${drop.authorHandle}-${drop.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+        const success = await (window as any).electron.saveToPDF({ html: printHtml, filename });
         if (!success) {
           setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
           return; // User cancelled save dialog

@@ -30,8 +30,13 @@ ipcMain.on('print-document', (event, { html, printerName }) => {
   });
 });
 
-ipcMain.handle('print-to-pdf', async (event, html) => {
+ipcMain.handle('print-to-pdf', async (event, { html, filename }) => {
   const win = new BrowserWindow({ show: false });
+  // Set title to avoid data URI in filename
+  win.webContents.on('did-finish-load', () => {
+    win.setTitle(filename || 'Drop a Line');
+  });
+
   await win.loadURL(`data:text/html;charset=utf-8,${encodeURI(html)}`);
   const data = await win.webContents.printToPDF({
     printBackground: true,
@@ -42,7 +47,7 @@ ipcMain.handle('print-to-pdf', async (event, html) => {
 
   const { filePath } = await require('electron').dialog.showSaveDialog({
     buttonLabel: 'Save PDF',
-    defaultPath: `dropaline-${Date.now()}.pdf`,
+    defaultPath: filename || `dropaline-${Date.now()}.pdf`,
     filters: [{ name: 'Adobe PDF', extensions: ['pdf'] }]
   });
 
