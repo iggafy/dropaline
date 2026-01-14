@@ -5,7 +5,7 @@ import logo from '../assets/logo.png';
 
 export const LandingView: React.FC = () => {
     const [scrollY, setScrollY] = useState(0);
-    const latestVersion = "1.0.9";
+    const latestVersion = "1.1.0";
     const githubRepo = "https://github.com/iggafy/dropaline";
 
     const downloadLinks = {
