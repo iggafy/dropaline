@@ -1,17 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Send, Layout, Eye, Save, Check } from 'lucide-react';
-import { Drop, UserProfile } from '../types';
+import { Printer, Send, Layout, Eye, Save, Check } from 'lucide-react';
+import { Drop, UserProfile, PrinterState } from '../types';
 
 interface WriterViewProps {
   onPublish: (drop: Drop) => void;
+  onPrintDraft: (drop: Drop) => void;
+  printer: PrinterState;
   userProfile: UserProfile;
   doubleSided: boolean;
 }
 
 type LayoutType = 'classic' | 'zine' | 'minimal';
 
-export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile, doubleSided }) => {
+export const WriterView: React.FC<WriterViewProps> = ({ onPublish, onPrintDraft, printer, userProfile, doubleSided }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [currentLayout, setCurrentLayout] = useState<LayoutType>('classic');
@@ -80,6 +82,24 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile, 
     localStorage.removeItem('dropaline_draft_layout');
   };
 
+  const handlePrint = () => {
+    if (!title || !content) return;
+    const tempDrop: Drop = {
+      id: 'draft',
+      author: userProfile.name,
+      authorHandle: userProfile.handle,
+      title,
+      content,
+      timestamp: Date.now(),
+      status: 'received',
+      layout: currentLayout,
+      likes: 0,
+      liked: false,
+      comments: 0
+    };
+    onPrintDraft(tempDrop);
+  };
+
   const toggleLayout = () => {
     const layouts: LayoutType[] = ['classic', 'zine', 'minimal'];
     const currentIndex = layouts.indexOf(currentLayout);
@@ -111,6 +131,14 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, userProfile, 
             {saveStatus === 'saving' && 'Saving...'}
             {saveStatus === 'saved' && 'Draft saved'}
           </div>
+          <button
+            onClick={handlePrint}
+            disabled={!title || !content || printer.isPrinting}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-[#48484a] bg-[#f5f5f7] hover:bg-[#ebebeb] transition-all disabled:opacity-30"
+          >
+            <Printer size={14} />
+            {printer.isPrinting && printer.currentJob === 'Draft' ? 'Printing...' : 'Print Draft'}
+          </button>
           <button
             onClick={() => setIsPreviewMode(!isPreviewMode)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-[#48484a] hover:bg-[#f5f5f7] transition-all"

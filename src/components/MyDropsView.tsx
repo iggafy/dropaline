@@ -8,20 +8,26 @@ import {
     Send,
     MessageCircle,
     MoreVertical,
-    BarChart
+    BarChart,
+    Eye,
+    X
 } from 'lucide-react';
-import { Drop, Comment } from '../types';
+import { Drop, Comment, PrinterState } from '../types';
 import { CommentItem } from './CommentItem';
+import { DropPreview } from './DropPreview';
 
 interface MyDropsViewProps {
     drops: Drop[];
+    printer: PrinterState;
+    onPrint: (id: string) => void;
     onReply: (dropId: string, text: string, parentId?: string) => void;
     onLikeComment: (dropId: string, commentId: string) => void;
 }
 
 
-export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply, onLikeComment }) => {
+export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, printer, onPrint, onReply, onLikeComment }) => {
     const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
+    const [previewDrop, setPreviewDrop] = useState<Drop | null>(null);
     const [replyText, setReplyText] = useState('');
     const [activeParentId, setActiveParentId] = useState<string | null>(null);
 
@@ -77,7 +83,29 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply, onLike
                                                     Relayed {new Date(drop.timestamp).toLocaleDateString()}
                                                 </p>
                                             </div>
-                                            <ChevronRight size={18} className={`transition-transform ${selectedDropId === drop.id ? 'rotate-90 text-[#0066cc]' : 'text-[#d1d1d6]'}`} />
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPreviewDrop(drop);
+                                                    }}
+                                                    className="p-1.5 rounded-full hover:bg-black/5 text-[#86868b] hover:text-[#0066cc] transition-all"
+                                                    title="Preview document"
+                                                >
+                                                    <Eye size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onPrint(drop.id);
+                                                    }}
+                                                    className="p-1.5 rounded-full hover:bg-black/5 text-[#86868b] hover:text-black transition-all"
+                                                    title="Print document"
+                                                >
+                                                    <Printer size={16} />
+                                                </button>
+                                                <ChevronRight size={18} className={`transition-transform ${selectedDropId === drop.id ? 'rotate-90 text-[#0066cc]' : 'text-[#d1d1d6]'}`} />
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-4">
@@ -194,6 +222,16 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, onReply, onLike
                     </div>
                 )}
             </div>
+
+            {/* Preview Modal */}
+            {previewDrop && (
+                <DropPreview
+                    drop={previewDrop}
+                    printer={printer}
+                    onPrint={onPrint}
+                    onClose={() => setPreviewDrop(null)}
+                />
+            )}
         </div>
     );
 };

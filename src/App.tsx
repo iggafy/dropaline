@@ -418,14 +418,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handlePrintDrop = async (dropId: string) => {
-    const drop = drops.find(d => d.id === dropId);
-    if (!drop) return;
-
-    setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: dropId }));
-
-    // Generate HTML for printing (Gateway Aesthetic)
-    const printHtml = `
+  const generatePrintHtml = (drop: Drop) => {
+    return `
       <html>
         <head>
           <style>
@@ -500,27 +494,39 @@ const App: React.FC = () => {
         </body>
       </html>
     `;
+  };
 
-    // 1. Send to real Electron Output (PDF or Hardware)
-    if ((window as any).electron) {
-      if (printer.name === 'SAVE_AS_PDF') {
-        const filename = `${drop.authorHandle}-${drop.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-        const success = await (window as any).electron.saveToPDF({ html: printHtml, filename });
-        if (!success) {
-          setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
-          return; // User cancelled save dialog
-        }
-      } else {
-        (window as any).electron.print({
-          html: printHtml,
-          printerName: printer.name,
-          duplexMode: doubleSided ? 'longEdge' : 'simplex'
-        });
-      }
+  const executePrintJob = async (drop: Drop) => {
+    if (!(window as any).electron) {
+      console.warn('Physical printing requires the Linux Gateway Client.');
+      return false;
     }
 
-    // 2. Update status in DB
-    if (session?.user) {
+    const printHtml = generatePrintHtml(drop);
+
+    if (printer.name === 'SAVE_AS_PDF') {
+      const filename = `${drop.authorHandle}-${drop.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      const success = await (window as any).electron.saveToPDF({ html: printHtml, filename });
+      return success;
+    } else {
+      (window as any).electron.print({
+        html: printHtml,
+        printerName: printer.name,
+        duplexMode: doubleSided ? 'longEdge' : 'simplex'
+      });
+      return true;
+    }
+  };
+
+  const handlePrintDrop = async (dropId: string) => {
+    const drop = drops.find(d => d.id === dropId);
+    if (!drop) return;
+
+    setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: dropId }));
+
+    const success = await executePrintJob(drop);
+
+    if (success && session?.user) {
       const { error } = await supabase
         .from('user_drop_statuses')
         .upsert({
@@ -530,15 +536,21 @@ const App: React.FC = () => {
         }, { onConflict: 'user_id, drop_id' });
 
       if (error) console.error('Failed to update print status', error);
+
+      setDrops(prev => prev.map(d => {
+        if (d.id === dropId && d.status !== 'printed') {
+          return { ...d, status: 'printed', printCount: (d.printCount || 0) + 1 };
+        }
+        return d.id === dropId ? { ...d, status: 'printed' } : d;
+      }));
     }
 
-    // Update local state
-    setDrops(prev => prev.map(d => {
-      if (d.id === dropId && d.status !== 'printed') {
-        return { ...d, status: 'printed', printCount: (d.printCount || 0) + 1 };
-      }
-      return d.id === dropId ? { ...d, status: 'printed' } : d;
-    }));
+    setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
+  };
+
+  const handlePrintDraft = async (tempDrop: Drop) => {
+    setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: 'Draft' }));
+    await executePrintJob(tempDrop);
     setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
   };
 
@@ -848,6 +860,8 @@ const App: React.FC = () => {
           <WriterView
             userProfile={userProfile}
             onPublish={handlePublishDrop}
+            onPrintDraft={handlePrintDraft}
+            printer={printer}
             doubleSided={doubleSided}
           />
         );
@@ -864,6 +878,8 @@ const App: React.FC = () => {
         return (
           <MyDropsView
             drops={drops.filter(d => d.authorHandle === userProfile?.handle)}
+            printer={printer}
+            onPrint={handlePrintDrop}
             onReply={handleAddComment}
             onLikeComment={handleLikeComment}
           />
