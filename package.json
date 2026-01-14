@@ -2,6 +2,7 @@
   "name": "dropaline",
   "version": "1.0.0",
   "description": "The physical internet for writers and readers.",
+  "homepage": ".",
   "main": "electron/main.js",
   "scripts": {
     "start": "react-scripts start",
