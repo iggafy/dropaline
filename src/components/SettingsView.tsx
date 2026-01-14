@@ -94,7 +94,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               ) : (
                 <button
-                  onClick={() => setIsEditingProfile(true)}
+                  onClick={() => {
+                    setTempProfile(userProfile);
+                    setIsEditingProfile(true);
+                  }}
                   className="px-3 py-1 text-xs font-semibold text-[#0066cc] hover:bg-[#f0f7ff] rounded-lg transition-colors"
                 >
                   Edit Profile
@@ -178,7 +181,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <p className="text-sm font-semibold text-[#1d1d1f]">
-                    {printer.name === 'SAVE_AS_PDF' ? 'Digital Output' : (printer.name || 'No printer selected')}
+                    Printer Status
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`w-1.5 h-1.5 rounded-full ${printer.isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>

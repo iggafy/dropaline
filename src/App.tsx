@@ -321,6 +321,7 @@ const App: React.FC = () => {
 
     if (error) {
       console.error('Failed to update profile', error);
+      alert('Failed to update profile. Please try again.');
       return;
     }
 

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Printer, CheckCircle2, Clock, MoreHorizontal, Layout, Inbox, Heart, MessageCircle, Eye, X, Send, Hourglass } from 'lucide-react';
+import { Printer, CheckCircle2, Clock, MoreHorizontal, Layout, Inbox, Heart, MessageCircle, Eye, X, Send, Hourglass, RotateCcw } from 'lucide-react';
 import { Drop, PrinterState } from '../types';
 
 interface ReaderViewProps {
@@ -128,21 +128,36 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
 
             <div className="flex items-center justify-between pt-4 border-t border-[#f2f2f2]">
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onPrint(drop.id)}
-                  disabled={drop.status === 'printed' || drop.status === 'queued' || printer.isPrinting}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all ${drop.status === 'printed'
-                    ? 'bg-green-100 text-green-700 cursor-not-allowed border border-green-200'
-                    : drop.status === 'queued'
-                      ? 'bg-[#f5f5f7] text-orange-600/70 cursor-not-allowed'
-                      : paperSaver
-                        ? 'bg-gray-800 text-white hover:bg-gray-700'
-                        : 'bg-black text-white hover:bg-black/90 active:scale-95 shadow-lg shadow-black/10'
-                    }`}
-                >
-                  <Printer size={14} />
-                  {drop.status === 'printed' ? 'Printed' : drop.status === 'queued' ? 'In Queue' : 'Push to Print'}
-                </button>
+                {drop.status === 'printed' ? (
+                  <>
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200 cursor-default">
+                      <CheckCircle2 size={14} />
+                      Printed
+                    </div>
+                    <button
+                      onClick={() => onPrint(drop.id)}
+                      disabled={printer.isPrinting}
+                      className="flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#ebebeb] transition-all"
+                    >
+                      <RotateCcw size={14} />
+                      Re-print
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => onPrint(drop.id)}
+                    disabled={drop.status === 'queued' || printer.isPrinting}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all ${drop.status === 'queued'
+                        ? 'bg-[#f5f5f7] text-orange-600/70 cursor-not-allowed'
+                        : paperSaver
+                          ? 'bg-gray-800 text-white hover:bg-gray-700'
+                          : 'bg-black text-white hover:bg-black/90 active:scale-95 shadow-lg shadow-black/10'
+                      }`}
+                  >
+                    <Printer size={14} />
+                    {drop.status === 'queued' ? 'In Queue' : 'Print'}
+                  </button>
+                )}
                 <button
                   onClick={() => handlePreview(drop)}
                   className="p-2 rounded-full hover:bg-[#f5f5f7] text-[#48484a] transition-colors"
