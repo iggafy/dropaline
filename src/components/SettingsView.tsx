@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Printer, Shield, Cloud, Camera, User, RefreshCw, Calendar, Clock, Play, LogOut, Sun, Moon, Monitor, Info } from 'lucide-react';
+import { Printer, Shield, Cloud, Camera, User, RefreshCw, Calendar, Clock, Play, LogOut, Sun, Moon, Monitor, Info, Link as LinkIcon, Globe, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { PrinterState, UserProfile } from '../types';
 
 interface SettingsViewProps {
@@ -170,6 +170,159 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`w-full text-sm text-[#48484a] bg-transparent border ${isEditingProfile ? 'border-[#d1d1d6] p-2 rounded-lg focus:border-black' : 'border-transparent p-0'} resize-none focus:outline-none transition-all`}
                   />
                 </div>
+
+                {/* Social Links */}
+                <div className="pt-4 border-t border-[#f2f2f2]">
+                  <label className="block text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-2">Social & Support Links</label>
+                  <div className="space-y-2">
+                    {(isEditingProfile ? tempProfile.socialLinks : userProfile.socialLinks)?.map((link, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-[#f5f5f7] p-2 rounded-xl group transition-all">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <Globe size={14} className="text-[#86868b] shrink-0" />
+                          <div className="flex flex-col overflow-hidden">
+                            <span className="text-[11px] font-bold text-[#1d1d1f] truncate">{link.label}</span>
+                            <span className="text-[10px] text-[#0066cc] hover:underline cursor-pointer truncate" onClick={() => window.open(link.url, '_blank')}>{link.url}</span>
+                          </div>
+                        </div>
+                        {isEditingProfile && (
+                          <button
+                            onClick={() => {
+                              const newLinks = [...(tempProfile.socialLinks || [])];
+                              newLinks.splice(idx, 1);
+                              setTempProfile({ ...tempProfile, socialLinks: newLinks });
+                            }}
+                            className="p-1.5 text-[#86868b] hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                    {isEditingProfile && (
+                      <div className="flex flex-col gap-2 p-3 border border-dashed border-[#d1d1d6] rounded-xl bg-gray-50/50">
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Label (e.g. Patreon)"
+                            id="newLinkLabel"
+                            className="text-[11px] bg-white border border-[#d1d1d6] rounded-lg px-2 py-1.5 focus:outline-none focus:border-black"
+                          />
+                          <input
+                            type="text"
+                            placeholder="URL"
+                            id="newLinkUrl"
+                            className="text-[11px] bg-white border border-[#d1d1d6] rounded-lg px-2 py-1.5 focus:outline-none focus:border-black"
+                          />
+                        </div>
+                        <button
+                          onClick={() => {
+                            const labelEl = document.getElementById('newLinkLabel') as HTMLInputElement;
+                            const urlEl = document.getElementById('newLinkUrl') as HTMLInputElement;
+                            if (labelEl.value && urlEl.value) {
+                              setTempProfile({
+                                ...tempProfile,
+                                socialLinks: [...(tempProfile.socialLinks || []), { label: labelEl.value, url: urlEl.value }]
+                              });
+                              labelEl.value = '';
+                              urlEl.value = '';
+                            }
+                          }}
+                          className="flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-black text-white rounded-lg hover:bg-black/90 transition-colors"
+                        >
+                          <Plus size={12} /> Add Link
+                        </button>
+                      </div>
+                    )}
+
+                    {!isEditingProfile && (!userProfile.socialLinks || userProfile.socialLinks.length === 0) && (
+                      <p className="text-[10px] text-[#86868b] italic">No social links added yet.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Privacy Toggle */}
+                <div className="pt-4 mt-4 border-t border-[#f2f2f2] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-0.5">Privacy</label>
+                      <p className="text-[10px] text-[#86868b]">Allow incoming Private Lines</p>
+                    </div>
+                    {isEditingProfile ? (
+                      <button
+                        onClick={() => setTempProfile(prev => ({ ...prev, allowPrivateDrops: !prev.allowPrivateDrops }))}
+                        className={`w-8 h-5 rounded-full relative transition-colors ${tempProfile.allowPrivateDrops !== false ? 'bg-black' : 'bg-[#e5e5e5]'}`}
+                      >
+                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${tempProfile.allowPrivateDrops !== false ? 'left-4' : 'left-1'}`} />
+                      </button>
+                    ) : (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${userProfile.allowPrivateDrops !== false ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                        {userProfile.allowPrivateDrops !== false ? 'Active' : 'Disabled'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Exceptions List */}
+                  {(isEditingProfile || (userProfile.privateLineExceptions && userProfile.privateLineExceptions.length > 0)) && (
+                    <div className="bg-[#fafafa] rounded-xl p-4 border border-[#f2f2f2] animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-[10px] font-bold text-[#86868b] uppercase tracking-wider">Allow Exceptions</label>
+                        <span className="text-[9px] text-[#86868b]">Allowed even if disabled</span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {(isEditingProfile ? tempProfile.privateLineExceptions : userProfile.privateLineExceptions)?.map(handle => (
+                          <div key={handle} className="flex items-center gap-1.5 bg-white border border-[#e5e5e5] px-2 py-1 rounded-lg text-xs font-medium text-[#1d1d1f]">
+                            @{handle}
+                            {isEditingProfile && (
+                              <button
+                                onClick={() => setTempProfile({
+                                  ...tempProfile,
+                                  privateLineExceptions: (tempProfile.privateLineExceptions || []).filter(h => h !== handle)
+                                })}
+                                className="text-[#86868b] hover:text-red-500"
+                              >
+                                <Shield size={10} className="rotate-45" /> {/* Using rotate shield as a variant X */}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {(isEditingProfile && (!tempProfile.privateLineExceptions || tempProfile.privateLineExceptions.length === 0)) && (
+                          <p className="text-[10px] text-[#86868b] italic">No exceptions added.</p>
+                        )}
+                        {!isEditingProfile && (!userProfile.privateLineExceptions || userProfile.privateLineExceptions.length === 0) && (
+                          <p className="text-[10px] text-[#86868b] italic">No exceptions added.</p>
+                        )}
+                      </div>
+
+                      {isEditingProfile && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 flex items-center bg-white border border-[#d1d1d6] rounded-lg px-2 py-1">
+                            <span className="text-[#86868b] text-xs">@</span>
+                            <input
+                              type="text"
+                              placeholder="handle"
+                              className="w-full text-xs font-medium focus:outline-none ml-0.5"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const val = e.currentTarget.value.trim().replace('@', '');
+                                  if (val && !(tempProfile.privateLineExceptions || []).includes(val)) {
+                                    setTempProfile({
+                                      ...tempProfile,
+                                      privateLineExceptions: [...(tempProfile.privateLineExceptions || []), val]
+                                    });
+                                    e.currentTarget.value = '';
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                          <p className="text-[9px] text-[#86868b]">Press Enter to add</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </section>
@@ -315,7 +468,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 )}
               </div>
 
-              <div className="flex items-center justify-between p-5">
+              <div className="flex items-center justify-between p-5 border-t border-[#f2f2f2]">
                 <div>
                   <p className="text-sm font-medium text-[#1d1d1f]">Duplex Output</p>
                   <p className="text-[11px] text-[#86868b] mt-0.5">Enable double-sided printing (Duplex) if supported by your device.</p>
@@ -325,6 +478,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${doubleSided ? 'bg-green-500' : 'bg-[#e5e5e5]'}`}
                 >
                   <div className={`absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm transition-all ${doubleSided ? 'left-6' : 'left-1'}`}></div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-5 border-t border-[#f2f2f2]">
+                <div>
+                  <p className="text-sm font-medium text-[#1d1d1f]">Print Color Mode</p>
+                  <p className="text-[11px] text-[#86868b] mt-0.5">Select your preferred output color.</p>
+                </div>
+                <div className="flex bg-[#f5f5f7] p-1 rounded-lg">
+                  <button
+                    onClick={() => onProfileUpdate({ ...userProfile, printColorMode: 'bw' })}
+                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${userProfile.printColorMode === 'bw' ? 'bg-white text-black shadow-sm' : 'text-[#86868b] hover:text-[#48484a]'}`}
+                  >
+                    B&W
+                  </button>
+                  <button
+                    onClick={() => onProfileUpdate({ ...userProfile, printColorMode: 'color' })}
+                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${userProfile.printColorMode !== 'bw' ? 'bg-white text-black shadow-sm' : 'text-[#86868b] hover:text-[#48484a]'}`}
+                  >
+                    Color
+                  </button>
                 </div>
               </div>
             </div>

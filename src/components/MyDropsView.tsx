@@ -52,7 +52,7 @@ export const MyDropsView: React.FC<MyDropsViewProps> = ({ drops, printer, onPrin
     return (
         <div className="h-full flex flex-col bg-white overflow-hidden">
             <header className="h-16 flex items-center px-8 border-b border-[#f2f2f2] shrink-0 justify-between">
-                <h2 className="text-xl font-bold text-[#1d1d1f]">My Drops</h2>
+                <h2 className="text-xl font-bold text-[#1d1d1f]">My Lines</h2>
             </header>
 
             <div className="flex-1 flex overflow-hidden">

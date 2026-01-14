@@ -13,9 +13,10 @@ import { Draft, AppView } from '../types';
 
 interface DraftsViewProps {
     onEditDraft: (draft: Draft) => void;
+    onCreateDraft: () => void;
 }
 
-export const DraftsView: React.FC<DraftsViewProps> = ({ onEditDraft }) => {
+export const DraftsView: React.FC<DraftsViewProps> = ({ onEditDraft, onCreateDraft }) => {
     const [drafts, setDrafts] = useState<Draft[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -70,6 +71,8 @@ export const DraftsView: React.FC<DraftsViewProps> = ({ onEditDraft }) => {
 
         if (error) {
             console.error('Error deleting draft:', error);
+        } else {
+            setDrafts(prev => prev.filter(d => d.id !== id));
         }
     };
 
@@ -87,15 +90,24 @@ export const DraftsView: React.FC<DraftsViewProps> = ({ onEditDraft }) => {
                         {drafts.length} Saved
                     </span>
                 </div>
-                <div className="relative">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b]" />
-                    <input
-                        type="text"
-                        placeholder="Search drafts..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 pr-4 py-1.5 bg-[#f5f5f7] border-none rounded-full text-xs focus:ring-2 focus:ring-black/5 w-64"
-                    />
+                <div className="flex items-center">
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b]" />
+                        <input
+                            type="text"
+                            placeholder="Search drafts..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 pr-4 py-1.5 bg-[#f5f5f7] border-none rounded-full text-xs focus:ring-2 focus:ring-black/5 w-64"
+                        />
+                    </div>
+                    <button
+                        onClick={onCreateDraft}
+                        className="ml-4 flex items-center gap-2 bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-black/80 transition-all shadow-sm"
+                    >
+                        <Edit3 size={14} />
+                        New Draft
+                    </button>
                 </div>
             </header>
 
@@ -158,6 +170,6 @@ export const DraftsView: React.FC<DraftsViewProps> = ({ onEditDraft }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

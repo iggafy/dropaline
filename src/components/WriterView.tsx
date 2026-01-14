@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Printer, Send, Layout, Eye, Save, Check, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Image as ImageIcon, Upload } from 'lucide-react';
+import { Printer, Send, Layout, Eye, Save, Check, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Image as ImageIcon, Upload, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
+import TextAlign from '@tiptap/extension-text-align';
 import './Editor.css';
 import { Drop, UserProfile, PrinterState, Draft } from '../types';
 import { supabase } from '../services/supabase';
@@ -46,6 +47,9 @@ export const WriterView: React.FC<WriterViewProps> = ({
       Placeholder.configure({
         placeholder: 'Begin your transmission...',
       }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
     ],
     content: '',
     onUpdate: ({ editor }) => {
@@ -65,6 +69,7 @@ export const WriterView: React.FC<WriterViewProps> = ({
       const savedTitle = localStorage.getItem('dropaline_draft_title');
       const savedContent = localStorage.getItem('dropaline_draft_content');
       const savedLayout = localStorage.getItem('dropaline_draft_layout') as LayoutType;
+      const savedId = localStorage.getItem('dropaline_draft_id');
 
       if (savedTitle) setTitle(savedTitle);
       if (savedContent) {
@@ -73,6 +78,9 @@ export const WriterView: React.FC<WriterViewProps> = ({
       }
       if (savedLayout && ['classic', 'zine', 'minimal'].includes(savedLayout)) {
         setCurrentLayout(savedLayout);
+      }
+      if (savedId) {
+        setDbDraftId(savedId);
       }
     }
   }, [initialDraft, editor]);
@@ -92,13 +100,17 @@ export const WriterView: React.FC<WriterViewProps> = ({
             .from('drafts')
             .update({ title, content, layout: currentLayout, updated_at: new Date().toISOString() })
             .eq('id', dbDraftId);
+          localStorage.setItem('dropaline_draft_id', dbDraftId);
         } else {
           const { data } = await supabase
             .from('drafts')
             .insert({ author_id: userProfile.id, title, content, layout: currentLayout })
             .select()
             .single();
-          if (data) setDbDraftId(data.id);
+          if (data) {
+            setDbDraftId(data.id);
+            localStorage.setItem('dropaline_draft_id', data.id);
+          }
         }
       }
 
@@ -242,151 +254,170 @@ export const WriterView: React.FC<WriterViewProps> = ({
             className="flex items-center gap-2 bg-black text-white px-5 py-1.5 rounded-full text-xs font-semibold hover:bg-black/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md shadow-black/10"
           >
             <Send size={14} />
-            Publish Drop
+            Drop a Line
           </button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Editor or Preview */}
-        <div className="flex-1 overflow-y-auto bg-white p-8 md:p-12 transition-all">
-          {isPreviewMode ? (
-            <div className={`max-w-2xl mx-auto bg-white aspect-[1/1.41] shadow-2xl p-12 md:p-16 border border-[#e5e5e5] relative flex flex-col ${getLayoutClasses(currentLayout)}`}>
-              <h1 className={`text-2xl md:text-3xl text-center mb-2 text-[#1d1d1f] font-bold uppercase tracking-wider`}>
-                {title || 'Untitled'}
-              </h1>
+        {/* Preview Container */}
+        <div className={`flex-1 overflow-y-auto bg-white p-8 md:p-12 transition-all ${!isPreviewMode ? 'hidden' : ''}`}>
+          <div className={`max-w-2xl mx-auto bg-white aspect-[1/1.41] shadow-2xl p-12 md:p-16 border border-[#e5e5e5] relative flex flex-col ${getLayoutClasses(currentLayout)}`}>
+            <h1 className={`text-2xl md:text-3xl text-center mb-2 text-[#1d1d1f] font-bold uppercase tracking-wider`}>
+              {title || 'Untitled'}
+            </h1>
 
-              <div className="border-t-2 border-black mb-4"></div>
-              <p className="text-sm italic text-[#48484a] mb-8 text-center md:text-left">
-                Published by @{userProfile.handle}
+            <div className="border-t-2 border-black mb-4"></div>
+            <p className="text-sm italic text-[#48484a] mb-8 text-center md:text-left">
+              Published by {userProfile.name} | @{userProfile.handle}
+            </p>
+
+            <div
+              className="text-[#1d1d1f] text-sm leading-[1.8] flex-1 prose-custom"
+              dangerouslySetInnerHTML={{ __html: content || 'Your content will appear here...' }}
+            />
+
+            <div className="mt-16 pt-8 border-t border-[#f2f2f2] text-center">
+              <p className="text-[10px] text-[#86868b] uppercase tracking-widest leading-relaxed">
+                Printed via Drop a Line Output Gateway<br />
+                {new Date().toLocaleDateString()} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
-
-              <div
-                className="text-[#1d1d1f] text-sm leading-[1.8] flex-1 prose-custom"
-                dangerouslySetInnerHTML={{ __html: content || 'Your content will appear here...' }}
-              />
-
-              <div className="mt-16 pt-8 border-t border-[#f2f2f2] text-center">
-                <p className="text-[10px] text-[#86868b] uppercase tracking-widest leading-relaxed">
-                  Printed via Drop a Line Output Gateway<br />
-                  {new Date().toLocaleDateString()} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
             </div>
-          ) : (
-            <div className={`max-w-3xl mx-auto h-full flex flex-col ${getLayoutClasses(currentLayout)}`}>
+          </div>
+        </div>
+
+        {/* Editor Container */}
+        <div className={`flex-1 overflow-y-auto bg-white p-8 md:p-12 transition-all ${isPreviewMode ? 'hidden' : ''}`}>
+          <div className={`max-w-3xl mx-auto h-full flex flex-col ${getLayoutClasses(currentLayout)}`}>
+            <input
+              type="text"
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-4xl font-bold text-[#1d1d1f] placeholder-[#d1d1d6] w-full border-none focus:outline-none bg-transparent mb-8"
+            />
+            <div className="flex-1 w-full text-lg text-[#1d1d1f] leading-relaxed relative">
+              {editor && (
+                <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="bubble-menu">
+                  <button
+                    onClick={() => editor.chain().focus().toggleBold().run()}
+                    className={editor.isActive('bold') ? 'is-active' : ''}
+                    title="Bold"
+                  >
+                    <Bold size={16} />
+                  </button>
+                  <button
+                    onClick={() => editor.chain().focus().toggleItalic().run()}
+                    className={editor.isActive('italic') ? 'is-active' : ''}
+                    title="Italic"
+                  >
+                    <Italic size={16} />
+                  </button>
+                  <button
+                    onClick={() => editor.chain().focus().toggleUnderline().run()}
+                    className={editor.isActive('underline') ? 'is-active' : ''}
+                    title="Underline"
+                  >
+                    <UnderlineIcon size={16} />
+                  </button>
+                  <button
+                    onClick={() => editor.chain().focus().toggleStrike().run()}
+                    className={editor.isActive('strike') ? 'is-active' : ''}
+                    title="Strikethrough"
+                  >
+                    <Strikethrough size={16} />
+                  </button>
+
+                  <div className="divider" />
+
+                  <button
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                    className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
+                    title="Heading 1"
+                  >
+                    <Heading1 size={16} />
+                  </button>
+                  <button
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                    className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
+                    title="Heading 2"
+                  >
+                    <Heading2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                    className={editor.isActive('heading', { level: 3 }) ? 'is-active' : ''}
+                    title="Heading 3"
+                  >
+                    <Heading3 size={16} />
+                  </button>
+
+                  <div className="divider" />
+
+                  <button
+                    onClick={() => editor.chain().focus().toggleBulletList().run()}
+                    className={editor.isActive('bulletList') ? 'is-active' : ''}
+                    title="Bullet List"
+                  >
+                    <List size={16} />
+                  </button>
+                  <button
+                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                    className={editor.isActive('orderedList') ? 'is-active' : ''}
+                    title="Numbered List"
+                  >
+                    <ListOrdered size={16} />
+                  </button>
+
+                  <div className="divider" />
+
+                  <button
+                    onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                    className={editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}
+                    title="Align Left"
+                  >
+                    <AlignLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                    className={editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}
+                    title="Align Center"
+                  >
+                    <AlignCenter size={16} />
+                  </button>
+                  <button
+                    onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                    className={editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}
+                    title="Align Right"
+                  >
+                    <AlignRight size={16} />
+                  </button>
+
+                  <div className="divider" />
+
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Add Image"
+                  >
+                    <ImageIcon size={16} />
+                  </button>
+                </BubbleMenu>
+              )}
+              <EditorContent editor={editor} className="h-full prose-editor" />
               <input
-                type="text"
-                placeholder="Title your drop..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="text-4xl font-bold text-[#1d1d1f] placeholder-[#d1d1d6] w-full border-none focus:outline-none bg-transparent mb-8"
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    handleImageUpload(e.target.files[0]);
+                  }
+                }}
               />
-              <div className="flex-1 w-full text-lg text-[#1d1d1f] leading-relaxed relative">
-                {editor && (
-                  <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="bubble-menu">
-                    <button
-                      onClick={() => editor.chain().focus().toggleBold().run()}
-                      className={editor.isActive('bold') ? 'is-active' : ''}
-                      title="Bold"
-                    >
-                      <Bold size={16} />
-                    </button>
-                    <button
-                      onClick={() => editor.chain().focus().toggleItalic().run()}
-                      className={editor.isActive('italic') ? 'is-active' : ''}
-                      title="Italic"
-                    >
-                      <Italic size={16} />
-                    </button>
-                    <button
-                      onClick={() => editor.chain().focus().toggleUnderline().run()}
-                      className={editor.isActive('underline') ? 'is-active' : ''}
-                      title="Underline"
-                    >
-                      <UnderlineIcon size={16} />
-                    </button>
-                    <button
-                      onClick={() => editor.chain().focus().toggleStrike().run()}
-                      className={editor.isActive('strike') ? 'is-active' : ''}
-                      title="Strikethrough"
-                    >
-                      <Strikethrough size={16} />
-                    </button>
-
-                    <div className="divider" />
-
-                    <button
-                      onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                      className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
-                      title="Heading 1"
-                    >
-                      <Heading1 size={16} />
-                    </button>
-                    <button
-                      onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                      className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
-                      title="Heading 2"
-                    >
-                      <Heading2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                      className={editor.isActive('heading', { level: 3 }) ? 'is-active' : ''}
-                      title="Heading 3"
-                    >
-                      <Heading3 size={16} />
-                    </button>
-
-                    <div className="divider" />
-
-                    <button
-                      onClick={() => editor.chain().focus().toggleBulletList().run()}
-                      className={editor.isActive('bulletList') ? 'is-active' : ''}
-                      title="Bullet List"
-                    >
-                      <List size={16} />
-                    </button>
-                    <button
-                      onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                      className={editor.isActive('orderedList') ? 'is-active' : ''}
-                      title="Numbered List"
-                    >
-                      <ListOrdered size={16} />
-                    </button>
-
-                    <button
-                      onClick={() => editor.chain().focus().insertContent('<p class="image-caption">Image caption...</p>').run()}
-                      title="Add Image Caption"
-                    >
-                      <span className="text-xs font-bold px-1">CAP</span>
-                    </button>
-
-                    <div className="divider" />
-
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      title="Add Image"
-                    >
-                      <ImageIcon size={16} />
-                    </button>
-                  </BubbleMenu>
-                )}
-                <EditorContent editor={editor} className="h-full prose-editor" />
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  style={{ display: 'none' }}
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      handleImageUpload(e.target.files[0]);
-                    }
-                  }}
-                />
-              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Floating Toolbar */}
@@ -405,7 +436,7 @@ export const WriterView: React.FC<WriterViewProps> = ({
               className="p-2 rounded-xl text-[#48484a] hover:bg-[#f5f5f7] flex items-center justify-center w-8 h-8"
               title="Upload Image"
             >
-              <Upload size={18} />
+              <ImageIcon size={18} />
             </button>
             <div className="w-[1px] h-4 bg-[#d1d1d6] mx-1"></div>
             <div
@@ -417,6 +448,6 @@ export const WriterView: React.FC<WriterViewProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };

@@ -117,7 +117,10 @@ const App: React.FC = () => {
         batchDate: profile.batch_date,
         batchTime: profile.batch_time,
         doubleSided: profile.paper_saver,
-        theme: profile.theme_preference || 'light'
+        theme: profile.theme_preference || 'light',
+        allowPrivateDrops: profile.allow_private_drops !== false,
+        privateLineExceptions: profile.private_line_exceptions || [],
+        socialLinks: profile.social_links || []
       };
       setUserProfile(p);
       setDoubleSided(p.doubleSided || false);
@@ -165,7 +168,8 @@ const App: React.FC = () => {
         avatar: p.avatar_url,
         followerCount: p.follower_count || 0,
         isFollowing: subIds.includes(p.id),
-        autoPrint: subMap.get(p.id) || false
+        autoPrint: subMap.get(p.id) || false,
+        socialLinks: p.social_links || []
       }));
       setCreators(mappedCreators);
     }
@@ -407,7 +411,10 @@ const App: React.FC = () => {
         batch_time: updatedProfile.batchTime,
         paper_saver: updatedProfile.doubleSided,
         avatar_url: updatedProfile.avatar,
-        theme_preference: updatedProfile.theme
+        theme_preference: updatedProfile.theme,
+        allow_private_drops: updatedProfile.allowPrivateDrops,
+        private_line_exceptions: updatedProfile.privateLineExceptions,
+        social_links: updatedProfile.socialLinks
       })
       .eq('id', session.user.id);
 
@@ -524,7 +531,8 @@ const App: React.FC = () => {
         avatar: p.avatar_url,
         followerCount: p.follower_count || 0,
         isFollowing: subIds.includes(p.id),
-        autoPrint: subMap.get(p.id) || false
+        autoPrint: subMap.get(p.id) || false,
+        socialLinks: p.social_links || []
       }));
       setCreators(mapped);
     }
@@ -633,10 +641,12 @@ const App: React.FC = () => {
       const success = await (window as any).electron.saveToPDF({ html: printHtml, filename });
       return success;
     } else {
+      const isColor = userProfile?.printColorMode !== 'bw';
       (window as any).electron.print({
         html: printHtml,
         printerName: printer.name,
-        duplexMode: doubleSided ? 'longEdge' : 'simplex'
+        duplexMode: doubleSided ? 'longEdge' : 'simplex',
+        color: isColor
       });
       return true;
     }
@@ -865,7 +875,7 @@ const App: React.FC = () => {
 
     // 2. Private Drops
     const privateToPrint = privateDrops.filter(d => {
-      if (d.status !== 'received' || autoPrintProcessedIds.current.has(d.id)) return false;
+      if (d.status !== 'accepted' || autoPrintProcessedIds.current.has(d.id)) return false;
       const contact = privateContacts.find(c => c.contactId === d.senderId);
       return contact?.autoPrint === true;
     });
@@ -874,23 +884,8 @@ const App: React.FC = () => {
       const drop = regularToPrint[0];
       autoPrintProcessedIds.current.add(drop.id);
       handlePrintDrop(drop.id);
-    } else if (privateToPrint.length > 0) {
-      const drop = privateToPrint[0];
-      autoPrintProcessedIds.current.add(drop.id);
-
-      // Print private drop
-      handlePrintDrop(drop.id, {
-        id: drop.id,
-        title: drop.encryptedTitle,
-        content: drop.encryptedContent,
-        authorHandle: drop.senderHandle,
-        layout: 'classic'
-      });
-
-      // Mark as read/printed
-      supabase.from('private_drops').update({ read_at: new Date().toISOString() }).eq('id', drop.id).then();
     }
-  }, [drops, privateDrops, creators, privateContacts, printer.isPrinting, batching]);
+  }, [drops, creators, printer.isPrinting, batching]);
 
   // Consolidating batch release engine here
   useEffect(() => {
@@ -947,31 +942,14 @@ const App: React.FC = () => {
 
   const processBatch = async () => {
     const queuedDrops = drops.filter(d => d.status === 'queued');
-    const queuedPrivate = privateDrops.filter(d => {
-      const contact = privateContacts.find(c => c.contactId === d.senderId);
-      return contact?.autoPrint === true;
-    });
 
-    if (queuedDrops.length === 0 && queuedPrivate.length === 0) return;
+    if (queuedDrops.length === 0) return;
 
     setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: 'Batch Release' }));
 
     // Sequentially print regular batch
     for (const drop of queuedDrops) {
       await handlePrintDrop(drop.id);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-
-    // Sequentially print private batch
-    for (const drop of queuedPrivate) {
-      await handlePrintDrop(drop.id, {
-        id: drop.id,
-        title: drop.encryptedTitle,
-        content: drop.encryptedContent,
-        authorHandle: drop.senderHandle,
-        layout: 'classic'
-      });
-      await supabase.from('private_drops').update({ read_at: new Date().toISOString() }).eq('id', drop.id);
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
@@ -1034,6 +1012,14 @@ const App: React.FC = () => {
           <DraftsView
             onEditDraft={(draft) => {
               setEditingDraft(draft);
+              setView(AppView.WRITER);
+            }}
+            onCreateDraft={() => {
+              setEditingDraft(null);
+              localStorage.removeItem('dropaline_draft_title');
+              localStorage.removeItem('dropaline_draft_content');
+              localStorage.removeItem('dropaline_draft_layout');
+              localStorage.removeItem('dropaline_draft_id');
               setView(AppView.WRITER);
             }}
           />

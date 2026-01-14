@@ -23,7 +23,11 @@ export interface UserProfile {
   batchDate?: string;
   batchTime?: string;
   doubleSided?: boolean;
+  printColorMode?: 'color' | 'bw';
   theme?: 'light' | 'dark' | 'system';
+  allowPrivateDrops?: boolean;
+  privateLineExceptions?: string[];
+  socialLinks?: { label: string; url: string }[];
 }
 
 export interface Comment {
@@ -72,9 +76,12 @@ export interface PrivateDrop {
   receiverId: string;
   encryptedTitle: string;
   encryptedContent: string;
+  rawTitle?: string;
+  rawContent?: string;
+  counterpartPublicKey?: string;
   timestamp: number;
   readAt?: number;
-  status?: 'received' | 'printed' | 'queued';
+  status?: 'pending' | 'accepted' | 'denied' | 'received' | 'printed' | 'queued';
 }
 
 export interface PrivateContact {
@@ -92,6 +99,7 @@ export interface Creator {
   isFollowing: boolean;
   autoPrint: boolean;
   avatar: string;
+  socialLinks?: { label: string; url: string }[];
 }
 
 export interface PrinterState {

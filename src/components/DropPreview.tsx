@@ -32,7 +32,7 @@ export const DropPreview: React.FC<DropPreviewProps> = ({
 
                     <div className="border-t-2 border-black mb-4"></div>
                     <p className="text-sm italic text-[#48484a] mb-8 text-center md:text-left">
-                        Published by @{drop.authorHandle}
+                        Published by {drop.author} | @{drop.authorHandle}
                     </p>
 
                     <div

@@ -157,6 +157,28 @@ const CreatorCard: React.FC<{ creator: Creator; onToggle: () => void; onToggleAu
           </span>
         </h4>
         <p className="text-xs text-[#48484a] mt-1 line-clamp-2 max-w-[200px] sm:max-w-xs">{creator.bio}</p>
+
+        {/* Social Links Sub-row */}
+        {creator.socialLinks && creator.socialLinks.length > 0 && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+            {creator.socialLinks.map((link, i) => (
+              <a
+                key={i}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[10px] font-bold text-[#0066cc] hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="w-3.5 h-3.5 rounded-full bg-[#f0f7ff] flex items-center justify-center">
+                  <AtSign size={8} />
+                </div>
+                {link.label}
+              </a>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center gap-3 mt-2">
           <span className="text-[10px] font-medium text-[#86868b]">{creator.followerCount.toLocaleString()} followers</span>
         </div>

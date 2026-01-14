@@ -23,9 +23,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
     { id: AppView.INBOX, label: 'Inbox', icon: Inbox },
     { id: AppView.WRITER, label: 'Writer', icon: PenTool },
     { id: AppView.DRAFTS, label: 'Drafts', icon: FileText },
-    { id: AppView.PRIVATE_DROPS, label: 'Private Drops', icon: Lock, badge: unreadPrivateCount },
+    { id: AppView.PRIVATE_DROPS, label: 'Private Lines', icon: Lock, badge: unreadPrivateCount },
     { id: AppView.FOLLOWING, label: 'Following', icon: Users },
-    { id: AppView.MY_DROPS, label: 'My Drops', icon: Layout },
+    { id: AppView.MY_DROPS, label: 'My Lines', icon: Layout },
     { id: AppView.SETTINGS, label: 'Settings', icon: Settings },
   ];
 
@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
           <img src={userProfile.avatar} alt="User Avatar" className="w-full h-full object-cover" />
         </div>
         <div className="flex flex-col">
-          <h1 className="text-sm font-bold text-[#1d1d1f] leading-tight">Drop a Line</h1>
+          <h1 className="text-sm font-bold text-[#1d1d1f] leading-tight">{userProfile.name}</h1>
           <span className="text-[11px] text-[#86868b] font-medium">@{userProfile.handle}</span>
         </div>
       </div>
