@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Printer, Shield, Cloud, Camera, User, RefreshCw, Calendar, Clock, Play } from 'lucide-react';
+import { Printer, Shield, Cloud, Camera, User, RefreshCw, Calendar, Clock, Play, LogOut } from 'lucide-react';
 import { PrinterState, UserProfile } from '../types';
 
 interface SettingsViewProps {
@@ -19,6 +19,7 @@ interface SettingsViewProps {
   customTime: string;
   setCustomTime: (value: string) => void;
   onProcessBatch: () => void;
+  onLogout: () => void;
   availablePrinters?: any[];
 }
 
@@ -37,6 +38,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   customTime,
   setCustomTime,
   onProcessBatch,
+  onLogout,
   availablePrinters = []
 }) => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -331,6 +333,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </p>
               </div>
             </div>
+          </section>
+
+          {/* Account Management */}
+          <section className="pt-8 border-t border-[#f2f2f2]">
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl border border-red-100 transition-all w-full justify-center shadow-sm"
+            >
+              <LogOut size={18} />
+              Terminate Session
+            </button>
+            <p className="text-[10px] text-center text-[#86868b] mt-4 uppercase tracking-[0.2em]">
+              Relay Terminal v1.0.0
+            </p>
           </section>
         </div>
       </div>

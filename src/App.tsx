@@ -267,6 +267,12 @@ const App: React.FC = () => {
     setUserProfile(updatedProfile);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setUserProfile(null);
+  };
+
   const handleAvatarUpload = async (file: File) => {
     if (!session?.user || !userProfile) return;
 
@@ -696,6 +702,7 @@ const App: React.FC = () => {
               handleProfileUpdate({ ...userProfile, batchTime: val } as UserProfile);
             }}
             onProcessBatch={processBatch}
+            onLogout={handleLogout}
           />
         );
       default:

@@ -8,10 +8,41 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "electron:dev": "concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && electron .\""
+    "electron:dev": "concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "npm run build && electron-builder build --publish never",
+    "electron:build:linux": "npm run build && electron-builder build --linux --publish never",
+    "electron:build:mac": "npm run build && electron-builder build --mac --publish never",
+    "electron:build:win": "npm run build && electron-builder build --win --publish never"
+  },
+  "build": {
+    "extends": null,
+    "appId": "com.dropaline.app",
+    "productName": "DropaLine",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "maintainer": "DropaLine Team <hello@dropaline.com>",
+      "icon": "electron/icon.png",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Office"
+    },
+    "mac": {
+      "icon": "electron/icon.png",
+      "target": "dmg",
+      "category": "public.app-category.productivity"
+    }
   },
   "keywords": [],
-  "author": "",
+  "author": "DropaLine Team <hello@dropaline.com>",
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
