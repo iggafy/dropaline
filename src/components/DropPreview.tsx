@@ -35,9 +35,10 @@ export const DropPreview: React.FC<DropPreviewProps> = ({
                         Published by @{drop.authorHandle}
                     </p>
 
-                    <div className="text-[#1d1d1f] text-base md:text-lg leading-[1.8] whitespace-pre-wrap font-serif">
-                        {drop.content}
-                    </div>
+                    <div
+                        className="text-[#1d1d1f] text-base md:text-lg leading-[1.8] font-serif"
+                        dangerouslySetInnerHTML={{ __html: drop.content }}
+                    />
 
                     <div className="mt-16 pt-8 border-t border-[#f2f2f2] text-center">
                         <p className="text-[10px] text-[#86868b] uppercase tracking-widest leading-relaxed">

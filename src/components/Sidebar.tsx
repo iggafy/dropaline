@@ -5,6 +5,8 @@ import {
   PenTool,
   Users,
   Settings,
+  FileText,
+  Lock,
   Layout
 } from 'lucide-react';
 import { AppView, UserProfile } from '../types';
@@ -13,12 +15,15 @@ interface SidebarProps {
   currentView: AppView;
   setView: (view: AppView) => void;
   userProfile: UserProfile;
+  unreadPrivateCount?: number;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProfile }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProfile, unreadPrivateCount = 0 }) => {
   const navItems = [
     { id: AppView.INBOX, label: 'Inbox', icon: Inbox },
     { id: AppView.WRITER, label: 'Writer', icon: PenTool },
+    { id: AppView.DRAFTS, label: 'Drafts', icon: FileText },
+    { id: AppView.PRIVATE_DROPS, label: 'Private Drops', icon: Lock, badge: unreadPrivateCount },
     { id: AppView.FOLLOWING, label: 'Following', icon: Users },
     { id: AppView.MY_DROPS, label: 'My Drops', icon: Layout },
     { id: AppView.SETTINGS, label: 'Settings', icon: Settings },
@@ -48,7 +53,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
               }`}
           >
             <item.icon size={18} className={currentView === item.id ? 'text-black' : 'text-[#86868b]'} />
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {item.badge > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm animate-pulse-subtle">
+                {item.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Printer, Shield, Cloud, Camera, User, RefreshCw, Calendar, Clock, Play, LogOut } from 'lucide-react';
+import { Printer, Shield, Cloud, Camera, User, RefreshCw, Calendar, Clock, Play, LogOut, Sun, Moon, Monitor, Info } from 'lucide-react';
 import { PrinterState, UserProfile } from '../types';
 
 interface SettingsViewProps {
@@ -326,6 +326,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 >
                   <div className={`absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm transition-all ${doubleSided ? 'left-6' : 'left-1'}`}></div>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Display & Theme */}
+          <section>
+            <div className="flex items-center gap-2 mb-4 px-2">
+              <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
+                <Sun size={16} />
+              </div>
+              <h3 className="text-sm font-bold text-[#1d1d1f]">Display & Appearance</h3>
+            </div>
+            <div className="bg-white rounded-2xl border border-[#e5e5e5] shadow-sm p-5">
+              <p className="text-sm font-medium text-[#1d1d1f] mb-3">Theme Preference</p>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { id: 'light', label: 'Light', icon: Sun },
+                  { id: 'dark', label: 'Dark', icon: Moon },
+                  { id: 'system', label: 'System', icon: Monitor }
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      onProfileUpdate({ ...userProfile, theme: t.id as any });
+                    }}
+                    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all ${userProfile.theme === t.id
+                      ? 'bg-[#f0f7ff] border-[#0066cc] text-[#0066cc] ring-1 ring-[#0066cc]'
+                      : 'bg-[#f5f5f7] border-transparent text-[#48484a] hover:border-[#d1d1d6]'
+                      }`}
+                  >
+                    <t.icon size={20} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{t.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </section>

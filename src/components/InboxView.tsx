@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Printer, CheckCircle2, Clock, Eye, X, Send, Hourglass, RotateCcw, Heart, MessageCircle, Inbox } from 'lucide-react';
 import { Drop, PrinterState } from '../types';
 import { DropPreview } from './DropPreview';
+import { CommentItem } from './CommentItem';
 
 interface InboxViewProps {
   drops: Drop[];
@@ -151,7 +152,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
             </div>
 
             <p className="text-sm leading-relaxed mb-6 line-clamp-3 italic text-[#48484a]">
-              "{drop.content}"
+              "{drop.content.replace(/<[^>]*>?/gm, '')}"
             </p>
 
             <div className="flex items-center justify-between pt-4 border-t border-[#f2f2f2]">

@@ -1,7 +1,13 @@
-
-import React, { useState, useEffect } from 'react';
-import { Printer, Send, Layout, Eye, Save, Check } from 'lucide-react';
-import { Drop, UserProfile, PrinterState } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Printer, Send, Layout, Eye, Save, Check, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Image as ImageIcon, Upload } from 'lucide-react';
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
+import './Editor.css';
+import { Drop, UserProfile, PrinterState, Draft } from '../types';
+import { supabase } from '../services/supabase';
 
 interface WriterViewProps {
   onPublish: (drop: Drop) => void;
@@ -9,58 +15,134 @@ interface WriterViewProps {
   printer: PrinterState;
   userProfile: UserProfile;
   doubleSided: boolean;
+  initialDraft?: Draft | null;
+  onDraftSaved?: () => void;
 }
 
 type LayoutType = 'classic' | 'zine' | 'minimal';
 
-export const WriterView: React.FC<WriterViewProps> = ({ onPublish, onPrintDraft, printer, userProfile, doubleSided }) => {
+export const WriterView: React.FC<WriterViewProps> = ({
+  onPublish,
+  onPrintDraft,
+  printer,
+  userProfile,
+  doubleSided,
+  initialDraft,
+  onDraftSaved
+}) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [currentLayout, setCurrentLayout] = useState<LayoutType>('classic');
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [dbDraftId, setDbDraftId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load draft on mount
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Image,
+      Placeholder.configure({
+        placeholder: 'Begin your transmission...',
+      }),
+    ],
+    content: '',
+    onUpdate: ({ editor }) => {
+      setContent(editor.getHTML());
+    },
+  });
+
+  // Load draft on mount (From prop or local storage)
   useEffect(() => {
-    const savedTitle = localStorage.getItem('dropaline_draft_title');
-    const savedContent = localStorage.getItem('dropaline_draft_content');
-    const savedLayout = localStorage.getItem('dropaline_draft_layout') as LayoutType;
+    if (initialDraft) {
+      setTitle(initialDraft.title);
+      setContent(initialDraft.content);
+      setCurrentLayout(initialDraft.layout);
+      setDbDraftId(initialDraft.id);
+      editor?.commands.setContent(initialDraft.content);
+    } else {
+      const savedTitle = localStorage.getItem('dropaline_draft_title');
+      const savedContent = localStorage.getItem('dropaline_draft_content');
+      const savedLayout = localStorage.getItem('dropaline_draft_layout') as LayoutType;
 
-    if (savedTitle) setTitle(savedTitle);
-    if (savedContent) setContent(savedContent);
-    if (savedLayout && ['classic', 'zine', 'minimal'].includes(savedLayout)) {
-      setCurrentLayout(savedLayout);
+      if (savedTitle) setTitle(savedTitle);
+      if (savedContent) {
+        setContent(savedContent);
+        editor?.commands.setContent(savedContent);
+      }
+      if (savedLayout && ['classic', 'zine', 'minimal'].includes(savedLayout)) {
+        setCurrentLayout(savedLayout);
+      }
     }
-  }, []);
+  }, [initialDraft, editor]);
 
-  // Auto-save draft on changes
+  // Auto-save draft on changes (Local + DB)
   useEffect(() => {
-    const saveToStorage = () => {
+    const saveToStorage = async () => {
+      // Local Backup
       localStorage.setItem('dropaline_draft_title', title);
       localStorage.setItem('dropaline_draft_content', content);
       localStorage.setItem('dropaline_draft_layout', currentLayout);
+
+      // Sync to Supabase
+      if (userProfile.id && (title || content)) {
+        if (dbDraftId) {
+          await supabase
+            .from('drafts')
+            .update({ title, content, layout: currentLayout, updated_at: new Date().toISOString() })
+            .eq('id', dbDraftId);
+        } else {
+          const { data } = await supabase
+            .from('drafts')
+            .insert({ author_id: userProfile.id, title, content, layout: currentLayout })
+            .select()
+            .single();
+          if (data) setDbDraftId(data.id);
+        }
+      }
+
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
     };
 
-    // If empty, just clear storage to keep it clean
-    if (!title && !content) {
-      localStorage.removeItem('dropaline_draft_title');
-      localStorage.removeItem('dropaline_draft_content');
+    if (!title && !content) return;
+
+    setSaveStatus('saving');
+    const timeoutId = setTimeout(saveToStorage, 2000); // 2s debounce for DB sanity
+
+    return () => clearTimeout(timeoutId);
+  }, [title, content, currentLayout, userProfile.id, dbDraftId]);
+
+  const handleImageUpload = async (file: File) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userProfile.id}-${Date.now()}.${fileExt}`;
+
+    setSaveStatus('saving');
+    const { error: uploadError } = await supabase.storage
+      .from('media')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      console.error('Image upload failed:', uploadError);
       return;
     }
 
-    setSaveStatus('saving');
-    const timeoutId = setTimeout(saveToStorage, 800); // Debounce 800ms
+    const { data } = supabase.storage
+      .from('media')
+      .getPublicUrl(fileName);
 
-    return () => clearTimeout(timeoutId);
-  }, [title, content, currentLayout]);
+    if (data.publicUrl && editor) {
+      editor.chain().focus().setImage({ src: data.publicUrl }).run();
+    }
+    setSaveStatus('idle');
+  };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!title || !content) return;
     const newDrop: Drop = {
       id: Math.random().toString(36).substr(2, 9),
-      author: userProfile.name, // Use real name
+      author: userProfile.name,
       authorHandle: userProfile.handle,
       title,
       content,
@@ -73,10 +155,18 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, onPrintDraft,
     };
     onPublish(newDrop);
 
+    // If it was a draft, delete from DB
+    if (dbDraftId) {
+      await supabase.from('drafts').delete().eq('id', dbDraftId);
+    }
+
     // Reset and Clear Draft
     setTitle('');
     setContent('');
     setCurrentLayout('classic');
+    setDbDraftId(null);
+    editor?.commands.clearContent();
+    onDraftSaved?.();
     localStorage.removeItem('dropaline_draft_title');
     localStorage.removeItem('dropaline_draft_content');
     localStorage.removeItem('dropaline_draft_layout');
@@ -171,9 +261,10 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, onPrintDraft,
                 Published by @{userProfile.handle}
               </p>
 
-              <div className="text-[#1d1d1f] text-sm leading-[1.8] whitespace-pre-wrap flex-1">
-                {content || 'Your content will appear here...'}
-              </div>
+              <div
+                className="text-[#1d1d1f] text-sm leading-[1.8] flex-1 prose-custom"
+                dangerouslySetInnerHTML={{ __html: content || 'Your content will appear here...' }}
+              />
 
               <div className="mt-16 pt-8 border-t border-[#f2f2f2] text-center">
                 <p className="text-[10px] text-[#86868b] uppercase tracking-widest leading-relaxed">
@@ -191,12 +282,109 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, onPrintDraft,
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-4xl font-bold text-[#1d1d1f] placeholder-[#d1d1d6] w-full border-none focus:outline-none bg-transparent mb-8"
               />
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Begin your transmission..."
-                className="flex-1 w-full text-lg text-[#1d1d1f] leading-relaxed resize-none focus:outline-none bg-transparent placeholder-[#d1d1d6]/50"
-              />
+              <div className="flex-1 w-full text-lg text-[#1d1d1f] leading-relaxed relative">
+                {editor && (
+                  <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="bubble-menu">
+                    <button
+                      onClick={() => editor.chain().focus().toggleBold().run()}
+                      className={editor.isActive('bold') ? 'is-active' : ''}
+                      title="Bold"
+                    >
+                      <Bold size={16} />
+                    </button>
+                    <button
+                      onClick={() => editor.chain().focus().toggleItalic().run()}
+                      className={editor.isActive('italic') ? 'is-active' : ''}
+                      title="Italic"
+                    >
+                      <Italic size={16} />
+                    </button>
+                    <button
+                      onClick={() => editor.chain().focus().toggleUnderline().run()}
+                      className={editor.isActive('underline') ? 'is-active' : ''}
+                      title="Underline"
+                    >
+                      <UnderlineIcon size={16} />
+                    </button>
+                    <button
+                      onClick={() => editor.chain().focus().toggleStrike().run()}
+                      className={editor.isActive('strike') ? 'is-active' : ''}
+                      title="Strikethrough"
+                    >
+                      <Strikethrough size={16} />
+                    </button>
+
+                    <div className="divider" />
+
+                    <button
+                      onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                      className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
+                      title="Heading 1"
+                    >
+                      <Heading1 size={16} />
+                    </button>
+                    <button
+                      onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                      className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
+                      title="Heading 2"
+                    >
+                      <Heading2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                      className={editor.isActive('heading', { level: 3 }) ? 'is-active' : ''}
+                      title="Heading 3"
+                    >
+                      <Heading3 size={16} />
+                    </button>
+
+                    <div className="divider" />
+
+                    <button
+                      onClick={() => editor.chain().focus().toggleBulletList().run()}
+                      className={editor.isActive('bulletList') ? 'is-active' : ''}
+                      title="Bullet List"
+                    >
+                      <List size={16} />
+                    </button>
+                    <button
+                      onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                      className={editor.isActive('orderedList') ? 'is-active' : ''}
+                      title="Numbered List"
+                    >
+                      <ListOrdered size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => editor.chain().focus().insertContent('<p class="image-caption">Image caption...</p>').run()}
+                      title="Add Image Caption"
+                    >
+                      <span className="text-xs font-bold px-1">CAP</span>
+                    </button>
+
+                    <div className="divider" />
+
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Add Image"
+                    >
+                      <ImageIcon size={16} />
+                    </button>
+                  </BubbleMenu>
+                )}
+                <EditorContent editor={editor} className="h-full prose-editor" />
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      handleImageUpload(e.target.files[0]);
+                    }
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -210,6 +398,14 @@ export const WriterView: React.FC<WriterViewProps> = ({ onPublish, onPrintDraft,
             >
               <Layout size={16} />
               {getLayoutLabel(currentLayout)}
+            </button>
+            <div className="w-[1px] h-4 bg-[#d1d1d6] mx-1"></div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2 rounded-xl text-[#48484a] hover:bg-[#f5f5f7] flex items-center justify-center w-8 h-8"
+              title="Upload Image"
+            >
+              <Upload size={18} />
             </button>
             <div className="w-[1px] h-4 bg-[#d1d1d6] mx-1"></div>
             <div

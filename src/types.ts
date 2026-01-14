@@ -2,6 +2,8 @@
 export enum AppView {
   INBOX = 'reader',
   WRITER = 'writer',
+  DRAFTS = 'drafts',
+  PRIVATE_DROPS = 'private_drops',
   FOLLOWING = 'following',
   MY_DROPS = 'my_drops',
   SETTINGS = 'settings'
@@ -14,12 +16,14 @@ export interface UserProfile {
   handle: string;
   bio: string;
   avatar: string;
+  publicKey?: string;
 
   // Preferences
   batchMode?: 'Instant' | 'Daily' | 'Weekly' | 'Custom';
   batchDate?: string;
   batchTime?: string;
   doubleSided?: boolean;
+  theme?: 'light' | 'dark' | 'system';
 }
 
 export interface Comment {
@@ -49,6 +53,34 @@ export interface Drop {
   comments: number;
   printCount?: number;
   commentList?: Comment[];
+}
+
+export interface Draft {
+  id: string;
+  title: string;
+  content: string;
+  layout: 'classic' | 'zine' | 'minimal';
+  updatedAt: number;
+}
+
+export interface PrivateDrop {
+  id: string;
+  senderId: string;
+  senderHandle: string;
+  senderName: string;
+  senderAvatar?: string;
+  receiverId: string;
+  encryptedTitle: string;
+  encryptedContent: string;
+  timestamp: number;
+  readAt?: number;
+  status?: 'received' | 'printed' | 'queued';
+}
+
+export interface PrivateContact {
+  userId: string;
+  contactId: string;
+  autoPrint: boolean;
 }
 
 export interface Creator {

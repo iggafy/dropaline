@@ -8,7 +8,12 @@ import { SubscriptionsView } from './components/SubscriptionsView';
 import { SettingsView } from './components/SettingsView';
 import { AuthView } from './components/AuthView';
 import { MyDropsView } from './components/MyDropsView';
-import { AppView, Drop, PrinterState, UserProfile, Creator, Comment } from './types';
+import { DraftsView } from './components/DraftsView';
+import { PrivateDropsView } from './components/PrivateDropsView';
+import { AppView, Drop, PrinterState, UserProfile, Creator, Comment, Draft, PrivateContact, PrivateDrop } from './types';
+import './index.css';
+import { decryptContent } from './services/encryption';
+import { decodeBase64 } from 'tweetnacl-util';
 
 // Initial Device State (Local Only)
 const INITIAL_PRINTER: PrinterState = {
@@ -34,10 +39,13 @@ const App: React.FC = () => {
   // App State
   const [view, setView] = useState<AppView>(AppView.INBOX);
   const [drops, setDrops] = useState<Drop[]>([]);
+  const [privateDrops, setPrivateDrops] = useState<PrivateDrop[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [dropsLimit, setDropsLimit] = useState(20);
   const [hasMoreDrops, setHasMoreDrops] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [unreadPrivateCount, setUnreadPrivateCount] = useState(0);
+  const [privateContacts, setPrivateContacts] = useState<PrivateContact[]>([]);
 
   // Device & Preference State (Synced to DB)
   const [doubleSided, setDoubleSided] = useState<boolean>(false);
@@ -46,6 +54,7 @@ const App: React.FC = () => {
   const [batching, setBatching] = useState<string>('Instant');
   const [customDate, setCustomDate] = useState<string>('');
   const [customTime, setCustomTime] = useState<string>('');
+  const [editingDraft, setEditingDraft] = useState<Draft | null>(null);
   const autoPrintProcessedIds = useRef<Set<string>>(new Set());
 
   // --- Auth & Init ---
@@ -107,13 +116,24 @@ const App: React.FC = () => {
         batchMode: profile.batch_mode,
         batchDate: profile.batch_date,
         batchTime: profile.batch_time,
-        doubleSided: profile.paper_saver
+        doubleSided: profile.paper_saver,
+        theme: profile.theme_preference || 'light'
       };
       setUserProfile(p);
       setDoubleSided(p.doubleSided || false);
       setBatching(p.batchMode || 'Instant');
       setCustomDate(p.batchDate || '');
       setCustomTime(p.batchTime || '');
+
+      // Apply theme
+      if (p.theme) {
+        if (p.theme === 'system') {
+          const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', p.theme);
+        }
+      }
     }
 
     // 2. Fetch Subscriptions & Creators
@@ -208,6 +228,64 @@ const App: React.FC = () => {
       });
       setDrops(mappedDrops);
     }
+
+    // 4. Fetch Unread Private Drops Count
+    const { count } = await supabase
+      .from('private_drops')
+      .select('*', { count: 'exact', head: true })
+      .eq('receiver_id', session.user.id)
+      .is('read_at', null);
+
+    setUnreadPrivateCount(count || 0);
+
+    // 5. Fetch Private Contacts
+    const { data: contactsData } = await supabase
+      .from('private_contacts')
+      .select('*')
+      .eq('user_id', session.user.id);
+
+    if (contactsData) {
+      setPrivateContacts(contactsData.map(c => ({
+        userId: c.user_id,
+        contactId: c.contact_id,
+        autoPrint: c.auto_print
+      })));
+    }
+
+    // 6. Fetch Unread Private Drops for Auto-Print
+    const { data: pDropsData } = await supabase
+      .from('private_drops')
+      .select(`
+        *,
+        sender:sender_id (id, handle, name, avatar_url, public_key)
+      `)
+      .eq('receiver_id', session.user.id)
+      .is('read_at', null);
+
+    if (pDropsData) {
+      const skBase64 = localStorage.getItem(`dropaline_sk_${session.user.id}`);
+      if (skBase64) {
+        const secretKey = decodeBase64(skBase64);
+        const mapped = pDropsData.map((d: any) => {
+          const [tNonce, tEnc] = d.encrypted_title.split(':');
+          const [cNonce, cEnc] = d.encrypted_content.split(':');
+
+          return {
+            id: d.id,
+            senderId: d.sender_id,
+            senderHandle: d.sender.handle,
+            senderName: d.sender.name,
+            senderAvatar: d.sender.avatar_url,
+            receiverId: d.receiver_id,
+            encryptedTitle: decryptContent(tEnc, tNonce, d.sender.public_key, secretKey) || '[Encrypted]',
+            encryptedContent: decryptContent(cEnc, cNonce, d.sender.public_key, secretKey) || '[Encrypted]',
+            timestamp: new Date(d.created_at).getTime(),
+            status: 'received'
+          } as PrivateDrop;
+        });
+        setPrivateDrops(mapped);
+      }
+    }
   };
 
   useEffect(() => {
@@ -244,6 +322,16 @@ const App: React.FC = () => {
         )
         .on(
           'postgres_changes',
+          { event: '*', schema: 'public', table: 'private_drops' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'private_contacts' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
           { event: '*', schema: 'public', table: 'comment_likes' },
           () => fetchData()
         )
@@ -254,6 +342,20 @@ const App: React.FC = () => {
       };
     }
   }, [session]);
+
+  useEffect(() => {
+    if (!userProfile) return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (userProfile.theme === 'system') {
+        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [userProfile?.theme]);
 
   // --- Persistence ---
   // No longer using local storage, using DB sync
@@ -304,9 +406,19 @@ const App: React.FC = () => {
         batch_date: updatedProfile.batchDate,
         batch_time: updatedProfile.batchTime,
         paper_saver: updatedProfile.doubleSided,
-        avatar_url: updatedProfile.avatar
+        avatar_url: updatedProfile.avatar,
+        theme_preference: updatedProfile.theme
       })
       .eq('id', session.user.id);
+
+    if (updatedProfile.theme) {
+      if (updatedProfile.theme === 'system') {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', updatedProfile.theme);
+      }
+    }
 
     if (error) {
       console.error('Failed to update profile', error);
@@ -463,8 +575,20 @@ const App: React.FC = () => {
               font-size: 16px;
               line-height: 1.7;
               color: #1a1a1a;
-              white-space: pre-wrap;
               word-wrap: break-word;
+            }
+            .content h1 { font-size: 24px; margin: 16px 0 8px; }
+            .content h2 { font-size: 20px; margin: 14px 0 7px; }
+            .content h3 { font-size: 18px; margin: 12px 0 6px; }
+            .content ul, .content ol { padding-left: 20px; margin: 10px 0; }
+            .content li { margin-bottom: 5px; }
+            .content img {
+              max-width: 100%;
+              height: auto;
+              border-radius: 4px;
+              margin: 20px 0;
+              display: block;
+              filter: grayscale(20%); /* Slight film-like feel */
             }
             .footer {
               margin-top: 50px;
@@ -518,8 +642,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handlePrintDrop = async (dropId: string) => {
-    const drop = drops.find(d => d.id === dropId);
+  const handlePrintDrop = async (dropId: string, manualDrop?: any) => {
+    let drop = manualDrop || drops.find(d => d.id === dropId);
     if (!drop) return;
 
     setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: dropId }));
@@ -527,22 +651,27 @@ const App: React.FC = () => {
     const success = await executePrintJob(drop);
 
     if (success && session?.user) {
-      const { error } = await supabase
-        .from('user_drop_statuses')
-        .upsert({
-          user_id: session.user.id,
-          drop_id: dropId,
-          status: 'printed'
-        }, { onConflict: 'user_id, drop_id' });
+      if (!manualDrop) {
+        const { error } = await supabase
+          .from('user_drop_statuses')
+          .upsert({
+            user_id: session.user.id,
+            drop_id: dropId,
+            status: 'printed'
+          }, { onConflict: 'user_id, drop_id' });
 
-      if (error) console.error('Failed to update print status', error);
+        if (error) console.error('Failed to update print status', error);
 
-      setDrops(prev => prev.map(d => {
-        if (d.id === dropId && d.status !== 'printed') {
-          return { ...d, status: 'printed', printCount: (d.printCount || 0) + 1 };
-        }
-        return d.id === dropId ? { ...d, status: 'printed' } : d;
-      }));
+        setDrops(prev => prev.map(d => {
+          if (d.id === dropId && d.status !== 'printed') {
+            return { ...d, status: 'printed', printCount: (d.printCount || 0) + 1 };
+          }
+          return d.id === dropId ? { ...d, status: 'printed' } : d;
+        }));
+      } else {
+        // If it's a private drop, it doesn't have a status in user_drop_statuses
+        // We handle its read_at in the calling useEffect or PrivateDropsView
+      }
     }
 
     setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
@@ -725,28 +854,43 @@ const App: React.FC = () => {
 
   // --- Auto-Print Engine (Instant Mode) ---
   useEffect(() => {
-    // Only trigger immediate auto-printing if the user is in 'Instant' mode.
-    // In all other modes, auto-printing is handled by the processBatch system.
-    if (!session?.user || batching !== 'Instant' || !drops.length || !creators.length || printer.isPrinting) return;
+    if (!session?.user || batching !== 'Instant' || printer.isPrinting) return;
 
-    // Filter incoming drops that should be auto-printed
-    const toAutoPrint = drops.filter(d => {
-      // 1. Must be 'received'
-      // 2. Must not have been processed in this session
-      // 3. The author must have auto-print enabled
+    // 1. Regular Drops
+    const regularToPrint = drops.filter(d => {
       if (d.status !== 'received' || autoPrintProcessedIds.current.has(d.id)) return false;
-
-      const creator = creators.find(c => c.id === creators.find(cr => cr.handle === d.authorHandle)?.id);
+      const creator = creators.find(cr => cr.handle === d.authorHandle);
       return creator?.autoPrint === true;
     });
 
-    if (toAutoPrint.length > 0) {
-      const dropToPrint = toAutoPrint[0]; // Take the first one found
-      autoPrintProcessedIds.current.add(dropToPrint.id);
-      console.log('Instant auto-print:', dropToPrint.title);
-      handlePrintDrop(dropToPrint.id);
+    // 2. Private Drops
+    const privateToPrint = privateDrops.filter(d => {
+      if (d.status !== 'received' || autoPrintProcessedIds.current.has(d.id)) return false;
+      const contact = privateContacts.find(c => c.contactId === d.senderId);
+      return contact?.autoPrint === true;
+    });
+
+    if (regularToPrint.length > 0) {
+      const drop = regularToPrint[0];
+      autoPrintProcessedIds.current.add(drop.id);
+      handlePrintDrop(drop.id);
+    } else if (privateToPrint.length > 0) {
+      const drop = privateToPrint[0];
+      autoPrintProcessedIds.current.add(drop.id);
+
+      // Print private drop
+      handlePrintDrop(drop.id, {
+        id: drop.id,
+        title: drop.encryptedTitle,
+        content: drop.encryptedContent,
+        authorHandle: drop.senderHandle,
+        layout: 'classic'
+      });
+
+      // Mark as read/printed
+      supabase.from('private_drops').update({ read_at: new Date().toISOString() }).eq('id', drop.id).then();
     }
-  }, [drops, creators, printer.isPrinting, batching]);
+  }, [drops, privateDrops, creators, privateContacts, printer.isPrinting, batching]);
 
   // Consolidating batch release engine here
   useEffect(() => {
@@ -803,18 +947,36 @@ const App: React.FC = () => {
 
   const processBatch = async () => {
     const queuedDrops = drops.filter(d => d.status === 'queued');
-    if (queuedDrops.length === 0) return;
+    const queuedPrivate = privateDrops.filter(d => {
+      const contact = privateContacts.find(c => c.contactId === d.senderId);
+      return contact?.autoPrint === true;
+    });
+
+    if (queuedDrops.length === 0 && queuedPrivate.length === 0) return;
 
     setPrinter(prev => ({ ...prev, isPrinting: true, currentJob: 'Batch Release' }));
 
-    // Sequentially print the batch
+    // Sequentially print regular batch
     for (const drop of queuedDrops) {
       await handlePrintDrop(drop.id);
-      // Small pause between jobs for hardware stability
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    // Sequentially print private batch
+    for (const drop of queuedPrivate) {
+      await handlePrintDrop(drop.id, {
+        id: drop.id,
+        title: drop.encryptedTitle,
+        content: drop.encryptedContent,
+        authorHandle: drop.senderHandle,
+        layout: 'classic'
+      });
+      await supabase.from('private_drops').update({ read_at: new Date().toISOString() }).eq('id', drop.id);
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
     setPrinter(prev => ({ ...prev, isPrinting: false, currentJob: undefined }));
+    fetchData(); // Refresh counts and status
   };
 
   if (loading) {
@@ -863,6 +1025,24 @@ const App: React.FC = () => {
             onPrintDraft={handlePrintDraft}
             printer={printer}
             doubleSided={doubleSided}
+            initialDraft={editingDraft}
+            onDraftSaved={() => setEditingDraft(null)}
+          />
+        );
+      case AppView.DRAFTS:
+        return (
+          <DraftsView
+            onEditDraft={(draft) => {
+              setEditingDraft(draft);
+              setView(AppView.WRITER);
+            }}
+          />
+        );
+      case AppView.PRIVATE_DROPS:
+        return (
+          <PrivateDropsView
+            userProfile={userProfile!}
+            onPrint={handlePrintDrop}
           />
         );
       case AppView.FOLLOWING:
@@ -928,7 +1108,8 @@ const App: React.FC = () => {
       <Sidebar
         currentView={view}
         setView={setView}
-        userProfile={userProfile}
+        userProfile={userProfile!}
+        unreadPrivateCount={unreadPrivateCount}
       />
       <main className="flex-1 overflow-hidden relative">
         {renderView()}

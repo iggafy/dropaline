@@ -1,0 +1,124 @@
+/* Prose compatibility for both editor and preview */
+.ProseMirror,
+.prose-custom {
+    outline: none;
+    line-height: 1.8;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: #adb5bd;
+    pointer-events: none;
+    height: 0;
+}
+
+/* Bubble Menu Styles */
+.bubble-menu {
+    display: flex;
+    background-color: white;
+    padding: 4px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #efeff4;
+    gap: 2px;
+    align-items: center;
+    z-index: 100;
+}
+
+.bubble-menu button {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    color: #48484a;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.bubble-menu button:hover {
+    background-color: #f5f5f7;
+    color: #000;
+}
+
+.bubble-menu button.is-active {
+    background-color: #000;
+    color: #fff;
+}
+
+.bubble-menu .divider {
+    width: 1px;
+    height: 20px;
+    background-color: #efeff4;
+    margin: 0 4px;
+}
+
+/* Shared Rich Text Styles */
+.ProseMirror h1,
+.prose-custom h1 {
+    font-size: 2em;
+    font-weight: bold;
+    margin: 1em 0 0.5em 0;
+}
+
+.ProseMirror h2,
+.prose-custom h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 1em 0 0.5em 0;
+}
+
+.ProseMirror h3,
+.prose-custom h3 {
+    font-size: 1.25em;
+    font-weight: bold;
+    margin: 1em 0 0.5em 0;
+}
+
+.ProseMirror ul,
+.prose-custom ul {
+    list-style-type: disc;
+    padding-left: 1.5em;
+    margin: 1em 0;
+}
+
+.ProseMirror ol,
+.prose-custom ol {
+    list-style-type: decimal;
+    padding-left: 1.5em;
+    margin: 1em 0;
+}
+
+.ProseMirror li,
+.prose-custom li {
+    margin-bottom: 0.5em;
+}
+
+.ProseMirror blockquote,
+.prose-custom blockquote {
+    border-left: 3px solid #d1d1d6;
+    padding-left: 1em;
+    margin-left: 0;
+    font-style: italic;
+    color: #48484a;
+}
+.ProseMirror img,
+.prose-custom img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1.5rem auto;
+    border-radius: 4px;
+}
+
+.image-caption {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #86868b;
+    font-style: italic;
+    margin-top: -1rem !important;
+    margin-bottom: 2rem !important;
+}
