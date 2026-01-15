@@ -9,9 +9,9 @@ export const LandingView: React.FC = () => {
     const githubRepo = "https://github.com/iggafy/dropaline";
 
     const downloadLinks = {
-        windows: `${githubRepo}/releases/download/v${latestVersion}/dropaline-Setup-${latestVersion}.exe`,
-        mac: `${githubRepo}/releases/download/v${latestVersion}/dropaline-${latestVersion}-arm64.dmg`,
-        linux: `${githubRepo}/releases/download/v${latestVersion}/dropaline-${latestVersion}.AppImage`,
+        windows: `${githubRepo}/releases/download/v${latestVersion}/Drop-a-Line-Setup-${latestVersion}.exe`,
+        mac: `${githubRepo}/releases/download/v${latestVersion}/Drop-a-Line-${latestVersion}-arm64.dmg`,
+        linux: `${githubRepo}/releases/download/v${latestVersion}/dropaline_${latestVersion}_amd64.deb`,
         releases: `${githubRepo}/releases`
     };
 
