@@ -45,7 +45,7 @@ export const LandingView: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-white text-[#1d1d1f] font-sans antialiased">
+        <div className="min-h-screen bg-white text-[#1d1d1f] font-sans antialiased overflow-x-hidden">
             <style>{`
                 @keyframes fadeIn {
                     from { opacity: 0; transform: translateY(20px); }
