@@ -28,6 +28,7 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
     const [readPrefs, setReadPrefs] = useState<string[]>([]);
     const [writePrefs, setWritePrefs] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [demoIndex, setDemoIndex] = useState(0); // For Step 5 demo
 
     // Initial load of profile data if present
     useEffect(() => {
@@ -224,7 +225,7 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
             <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--primary-bg)] text-[var(--text-main)] p-8 fade-in">
                 <div className="max-w-2xl w-full text-center">
                     <h2 className="text-3xl font-bold mb-4 font-serif">Almost ready!</h2>
-                    <p className="text-xl opacity-70 mb-12">Connect your printer to start receiving drops. Their stories will hit your inbox.</p>
+                    <p className="text-xl opacity-70 mb-12">Connect your printer to start receiving drops. You'll receive their stories in your inbox or automatically on your printer.</p>
 
                     <div className="bg-[var(--secondary-bg)] p-8 rounded-2xl mb-12 text-left">
                         <div className="flex items-center gap-4 mb-6">
@@ -269,40 +270,53 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
 
     // Step 5: Into to Passing Lines
     if (step === 5) {
-        const activeWriters = creators.slice(0, 8); // Take first 8
+        // Use full creators list or a subset
+        const currentCreator = creators[demoIndex % (creators.length || 1)] || creators[0];
+
+        const handleDemoPass = () => setDemoIndex(prev => prev + 1);
+        const handleDemoFollow = (id: string) => {
+            onToggleFollow(id);
+            setDemoIndex(prev => prev + 1);
+        };
 
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--primary-bg)] text-[var(--text-main)] p-8 fade-in">
-                <div className="max-w-4xl w-full text-center">
+                <div className="max-w-md w-full text-center">
                     <h2 className="text-4xl font-bold mb-6 font-serif">Here's Passing Lines</h2>
-                    <p className="text-xl opacity-70 mb-16 max-w-2xl mx-auto">
-                        A parade of active writers. Follow the ones that call to you, and their stories will hit your inbox.
+                    <p className="text-xl opacity-70 mb-10 mx-auto">
+                        Writers appear one by one. Follow the ones that call to you.
                     </p>
 
-                    {/* Simple Concept Animation/Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-                        {activeWriters.map((creator, i) => (
-                            <div key={creator.id} className="group relative aspect-[3/4] bg-[var(--secondary-bg)] rounded-xl p-4 flex flex-col items-center justify-between border border-[var(--border-color)] hover:border-[var(--accent-color)] transition-all">
-                                <img src={creator.avatar} alt={creator.name} className="w-16 h-16 rounded-full object-cover mb-2" />
-                                <div className="text-center">
-                                    <h3 className="font-bold text-sm truncate w-full">{creator.name}</h3>
-                                    <p className="text-xs opacity-60 truncate w-full">@{creator.handle}</p>
-                                    <p className="text-xs opacity-70 line-clamp-2 w-full mt-1 italic">"{creator.bio || '...'}"</p>
-                                </div>
+                    {/* Tinder-style Card Demo */}
+                    {creators.length > 0 ? (
+                        <div className="bg-[var(--card-bg)] rounded-3xl p-8 flex flex-col items-center text-center shadow-xl border border-[var(--border-color)] mb-12 relative">
+                            <img
+                                src={currentCreator.avatar}
+                                alt={currentCreator.name}
+                                className="w-24 h-24 rounded-full object-cover border-4 border-[var(--primary-bg)] shadow-md mb-4"
+                            />
+                            <h3 className="font-bold text-xl mb-1">{currentCreator.name}</h3>
+                            <p className="text-sm opacity-60 mb-2">@{currentCreator.handle}</p>
+                            <p className="text-sm italic opacity-80 mb-6 min-h-[3em]">"{currentCreator.bio || '...'}"</p>
+
+                            <div className="grid grid-cols-2 gap-4 w-full">
                                 <button
-                                    onClick={() => onToggleFollow(creator.id)}
-                                    className={`w-full py-2 rounded-lg text-xs font-bold transition-colors ${creator.isFollowing ? 'bg-transparent border border-[var(--accent-color)] text-[var(--text-main)]' : 'bg-[var(--text-main)] border border-[var(--text-main)] text-[var(--primary-bg)] hover:opacity-90'}`}
+                                    onClick={handleDemoPass}
+                                    className="py-3 rounded-xl border-2 border-[var(--border-color)] font-bold text-sm hover:bg-[var(--hover-bg)]"
                                 >
-                                    {creator.isFollowing ? 'Following' : 'Follow'}
+                                    Not for me
+                                </button>
+                                <button
+                                    onClick={() => handleDemoFollow(currentCreator.id)}
+                                    className={`py-3 rounded-xl font-bold text-sm transition-colors ${currentCreator.isFollowing ? 'bg-transparent border-2 border-[var(--accent-color)] text-[var(--text-main)]' : 'bg-[var(--text-main)] text-[var(--primary-bg)]'}`}
+                                >
+                                    {currentCreator.isFollowing ? 'Following' : 'Follow'}
                                 </button>
                             </div>
-                        ))}
-                        {activeWriters.length === 0 && (
-                            <div className="col-span-full text-center py-10 opacity-50">
-                                Loading active writers...
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    ) : (
+                        <div className="py-20 text-center opacity-50">Loading writers...</div>
+                    )}
 
                     <button
                         onClick={finishOnboarding}

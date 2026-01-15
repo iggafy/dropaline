@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Creator } from '../types';
-import { UserPlus, Check, RotateCcw } from 'lucide-react';
+import { UserPlus, X, Check, RotateCcw, Heart } from 'lucide-react';
 
 interface PassingLinesProps {
     creators: Creator[];
@@ -10,96 +10,106 @@ interface PassingLinesProps {
 }
 
 export const PassingLinesView: React.FC<PassingLinesProps> = ({ creators, onToggleFollow, onRefreshInfo }) => {
-    // Basic rotation logic: show random 8 or rotate over time
-    const [displayIndex, setDisplayIndex] = useState(0);
-    const visibleCount = 8;
+    const [index, setIndex] = useState(0);
+    const [viewedIds, setViewedIds] = useState<Set<string>>(new Set());
 
-    // Auto-rotate every 10 seconds? User said "rotate through 4 corners". 
-    // I'll implement a grid of 8 that refreshes or scrolls.
+    // Filter out creators we've already acted on in this session (optional logic)
+    // For now, just iterate through the list provided.
 
-    const visibleCreators = creators.slice(displayIndex, displayIndex + visibleCount);
-
-    // If we run out, loop
-    const displayCreators = visibleCreators.length < visibleCount
-        ? [...visibleCreators, ...creators.slice(0, visibleCount - visibleCreators.length)]
-        : visibleCreators;
+    // If we reach the end, what happens? 
+    // We can loop, or show a "All caught up" message.
+    // Let's loop for now but prioritizing unviewed?
+    // Simple logic: Just show creators[index]. If index >= length, reset or show empty.
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setDisplayIndex(prev => (prev + 4) % Math.max(creators.length, 1));
-        }, 8000);
-        return () => clearInterval(interval);
-    }, [creators.length]);
+        // If creators change (e.g. initial load), text index might be out of bounds, but safe access checks handle it.
+    }, [creators]);
+
+    const handlePass = () => {
+        setIndex(prev => (prev + 1) % Math.max(creators.length, 1));
+    };
+
+    const handleFollow = (id: string) => {
+        onToggleFollow(id);
+        setIndex(prev => (prev + 1) % Math.max(creators.length, 1));
+    };
+
+    const currentCreator = creators[index % (creators.length || 1)];
+
+    if (!creators || creators.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full opacity-60">
+                <RotateCcw className="animate-spin mb-4" />
+                <p>Syncing writers...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="h-full overflow-y-auto bg-[var(--primary-bg)] p-8">
-            <div className="max-w-6xl mx-auto">
-                <header className="mb-12 text-center">
-                    <h1 className="text-4xl font-bold font-serif mb-4">Passing Lines</h1>
-                    <p className="text-xl opacity-60">A parade of active writers. Follow the ones that call to you.</p>
-                </header>
+        <div className="h-full flex flex-col items-center justify-center bg-[var(--primary-bg)] p-6 overflow-hidden">
+            <header className="mb-8 text-center">
+                <h1 className="text-3xl font-bold font-serif mb-2">Passing Lines</h1>
+                <p className="opacity-60">Discover your next favorite writer.</p>
+            </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {displayCreators.map((creator, i) => (
-                        <div
-                            key={`${creator.id}-${i}`} // Use index key to handle duplicates if looping
-                            className="group relative aspect-[3/4] bg-[var(--secondary-bg)] rounded-2xl p-6 flex flex-col items-center justify-between border border-[var(--border-color)] hover:border-[var(--accent-color)] hover:shadow-xl transition-all duration-500 animate-fadeIn"
-                        >
-                            <div className="flex flex-col items-center w-full">
-                                <div className="relative w-24 h-24 mb-4">
-                                    <img
-                                        src={creator.avatar}
-                                        alt={creator.name}
-                                        className="w-full h-full rounded-full object-cover border-4 border-[var(--primary-bg)] shadow-md group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                    {creator.isFollowing && (
-                                        <div className="absolute -bottom-2 -right-2 bg-[var(--accent-color)] text-white p-1.5 rounded-full shadow-sm">
-                                            <Check size={14} strokeWidth={3} />
-                                        </div>
-                                    )}
-                                </div>
-                                <h3 className="font-bold text-lg text-center leading-tight mb-1">{creator.name}</h3>
-                                <p className="text-sm opacity-60 text-center mb-4">@{creator.handle}</p>
-                                <p className="text-sm text-center line-clamp-3 opacity-80 italic">"{creator.bio || 'Just dropping a line...'}"</p>
+            <div className="relative w-full max-w-md perspective-1000">
+                <div
+                    key={currentCreator.id}
+                    className="bg-[var(--card-bg)] rounded-3xl p-8 flex flex-col items-center text-center shadow-2xl border border-[var(--border-color)] transition-all animate-in fade-in zoom-in duration-300"
+                >
+                    <div className="relative mb-6">
+                        <img
+                            src={currentCreator.avatar}
+                            alt={currentCreator.name}
+                            className="w-32 h-32 rounded-full object-cover border-4 border-[var(--primary-bg)] shadow-lg"
+                        />
+                        {currentCreator.isFollowing && (
+                            <div className="absolute bottom-0 right-0 bg-[var(--accent-color)] text-white p-2 rounded-full shadow-md">
+                                <Check size={16} strokeWidth={3} />
                             </div>
+                        )}
+                    </div>
 
-                            <button
-                                onClick={() => onToggleFollow(creator.id)}
-                                className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${creator.isFollowing
-                                    ? 'bg-transparent border border-[var(--accent-color)] text-[var(--text-main)]'
-                                    : 'bg-[var(--text-main)] text-[var(--primary-bg)] hover:opacity-90 shadow-lg hover:shadow-xl hover:-translate-y-1'
-                                    }`}
-                            >
-                                {creator.isFollowing ? (
-                                    <>Following</>
-                                ) : (
-                                    <>
-                                        <UserPlus size={16} />
-                                        Follow
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    ))}
+                    <h2 className="text-2xl font-bold mb-1">{currentCreator.name}</h2>
+                    <p className="text-sm opacity-60 mb-6">@{currentCreator.handle}</p>
 
-                    {creators.length === 0 && (
-                        <div className="col-span-full py-20 text-center">
-                            <RotateCcw className="animate-spin mx-auto mb-4 opacity-30" />
-                            <p className="opacity-50">Syncing writers...</p>
-                        </div>
-                    )}
+                    <p className="text-lg italic opacity-80 mb-8 min-h-[4.5rem] flex items-center justify-center">
+                        "{currentCreator.bio || 'Just dropping a line...'}"
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4 w-full">
+                        <button
+                            onClick={handlePass}
+                            className="flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-[var(--border-color)] text-[var(--text-secondary)] font-bold hover:bg-[var(--hover-bg)] active:scale-95 transition-all"
+                        >
+                            <X size={20} />
+                            <span>Pass</span>
+                        </button>
+
+                        <button
+                            onClick={() => handleFollow(currentCreator.id)}
+                            className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all ${currentCreator.isFollowing
+                                    ? 'bg-transparent border-2 border-[var(--accent-color)] text-[var(--text-main)]'
+                                    : 'bg-[var(--text-main)] text-[var(--primary-bg)]'
+                                }`}
+                        >
+                            {currentCreator.isFollowing ? (
+                                <>
+                                    <Check size={20} />
+                                    <span>Following</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Heart size={20} />
+                                    <span>Follow</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <style>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: scale(0.95); }
-                    to { opacity: 1; transform: scale(1); }
-                }
-                .animate-fadeIn {
-                    animation: fadeIn 0.6s ease-out forwards;
-                }
-            `}</style>
+            <p className="mt-8 opacity-40 text-sm">Reviewing {index + 1} of {creators.length}</p>
         </div>
     );
 };
