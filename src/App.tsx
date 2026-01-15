@@ -8,6 +8,8 @@ import { SubscriptionsView } from './components/SubscriptionsView';
 import { SettingsView } from './components/SettingsView';
 import { AuthView } from './components/AuthView';
 import { LandingView } from './components/LandingView';
+import { OnboardingView } from './components/OnboardingView';
+import { PassingLinesView } from './components/PassingLinesView';
 import { MyDropsView } from './components/MyDropsView';
 import { DraftsView } from './components/DraftsView';
 import { PrivateDropsView } from './components/PrivateDropsView';
@@ -38,7 +40,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // App State
-  const [view, setView] = useState<AppView>(AppView.INBOX);
+  const [view, setView] = useState<AppView>(AppView.PASSING_LINES);
   const [drops, setDrops] = useState<Drop[]>([]);
   const [privateDrops, setPrivateDrops] = useState<PrivateDrop[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -123,7 +125,13 @@ const App: React.FC = () => {
         privateLineExceptions: profile.private_line_exceptions || [],
         socialLinks: profile.social_links || [],
         printColorMode: profile.print_color_mode || 'color',
-        isAdmin: profile.is_admin
+        isAdmin: profile.is_admin,
+
+        // Onboarding
+        onboardingCompleted: profile.onboarding_completed,
+        userIntent: profile.user_intent,
+        readingPreferences: profile.reading_preferences,
+        writingPreferences: profile.writing_preferences
       };
       setUserProfile(p);
       setDoubleSided(p.doubleSided || false);
@@ -541,6 +549,14 @@ const App: React.FC = () => {
       setCreators(mapped);
     }
   };
+
+  // Enforce Onboarding
+  useEffect(() => {
+    if (userProfile && !userProfile.onboardingCompleted && view !== AppView.ONBOARDING) {
+      setView(AppView.ONBOARDING);
+      handleSearchCreators(''); // Fetch helps populate step 5
+    }
+  }, [userProfile, view]);
 
   const generatePrintHtml = (drop: Drop) => {
     return `
@@ -1027,6 +1043,14 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (view) {
+      case AppView.PASSING_LINES:
+        return (
+          <PassingLinesView
+            creators={creators}
+            onToggleFollow={toggleSubscription}
+            onRefreshInfo={() => handleSearchCreators('')}
+          />
+        );
       case AppView.INBOX:
         return (
           <InboxView
@@ -1128,6 +1152,27 @@ const App: React.FC = () => {
             onProcessBatch={processBatch}
             onLogout={handleLogout}
             onDeleteAccount={handleDeleteAccount}
+          />
+        );
+      case AppView.ONBOARDING:
+        return (
+          <OnboardingView
+            profile={userProfile!}
+            onComplete={() => {
+              // Update local state to reflect completion without refetch
+              const updated = { ...userProfile!, onboardingCompleted: true };
+              setUserProfile(updated);
+              setView(AppView.PASSING_LINES);
+            }}
+            availablePrinters={availablePrinters}
+            currentPrinter={printer}
+            onSetPrinter={(p) => {
+              setPrinter(p);
+              // Persist printer choice immediately
+              localStorage.setItem('dropaline_printer_name', p.name);
+            }}
+            creators={creators}
+            onToggleFollow={toggleSubscription}
           />
         );
       default:

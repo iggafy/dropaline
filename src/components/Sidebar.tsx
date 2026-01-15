@@ -7,7 +7,8 @@ import {
   Settings,
   FileText,
   Lock,
-  BarChart3
+  BarChart3,
+  Compass
 } from 'lucide-react';
 import { AppView, UserProfile } from '../types';
 
@@ -23,6 +24,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProfile, unreadPrivateCount = 0 }) => {
   const navItems = [
+    { id: AppView.PASSING_LINES, label: 'Passing Lines', icon: Compass, colorClass: 'nav-icon-following' }, // Reusing following color style or new one
     { id: AppView.INBOX, label: 'Inbox', icon: Inbox, colorClass: 'nav-icon-inbox' },
     { id: AppView.WRITER, label: 'Writer', icon: PenTool, colorClass: 'nav-icon-writer' },
     { id: AppView.DRAFTS, label: 'Drafts', icon: FileText, colorClass: 'nav-icon-drafts' },

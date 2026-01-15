@@ -1,12 +1,14 @@
 
 export enum AppView {
+  PASSING_LINES = 'passing_lines',
   INBOX = 'reader',
   WRITER = 'writer',
   DRAFTS = 'drafts',
   PRIVATE_DROPS = 'private_drops',
   FOLLOWING = 'following',
   MY_DROPS = 'my_drops',
-  SETTINGS = 'settings'
+  SETTINGS = 'settings',
+  ONBOARDING = 'onboarding'
 }
 
 export interface UserProfile {
@@ -17,6 +19,12 @@ export interface UserProfile {
   bio: string;
   avatar: string;
   publicKey?: string;
+
+  // Onboarding
+  onboardingCompleted?: boolean;
+  userIntent?: 'writer' | 'reader' | 'both';
+  readingPreferences?: string[];
+  writingPreferences?: string[];
 
   // Preferences
   batchMode?: 'Instant' | 'Daily' | 'Weekly' | 'Custom';
