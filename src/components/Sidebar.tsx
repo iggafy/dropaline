@@ -41,7 +41,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
       {/* Brand Header */}
       <div className="flex items-center gap-3 px-2 mb-10">
         <img src={logo} alt="Drop a Line" className="w-7 h-7 object-contain mix-blend-multiply dark:mix-blend-normal" />
-        <span className="text-xs font-black uppercase tracking-[0.25em] text-[var(--text-main)] opacity-80">Drop a Line</span>
       </div>
 
       {/* User Profile - Premium Style */}
