@@ -150,19 +150,19 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
             "Academic / Research"
         ];
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--primary-bg)] text-[var(--text-main)] p-8 fade-in">
-                <div className="max-w-2xl w-full text-center">
-                    <h2 className="text-3xl font-bold mb-8 font-serif">What kind of stories do you like to read?</h2>
+            <div className="h-full w-full overflow-y-auto bg-[var(--primary-bg)] text-[var(--text-main)] p-6 fade-in">
+                <div className="min-h-full flex flex-col items-center justify-center max-w-4xl mx-auto py-10">
+                    <h2 className="text-3xl font-bold mb-8 font-serif text-center">What kind of stories do you like to read?</h2>
 
-                    <div className="flex flex-col gap-4 mb-12">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10 w-full">
                         {options.map(opt => (
                             <button
                                 key={opt}
                                 onClick={() => togglePref(readPrefs, setReadPrefs, opt)}
-                                className={`p-4 rounded-xl border-2 text-left flex items-center justify-between transition-all ${readPrefs.includes(opt) ? 'border-[var(--accent-color)] bg-[var(--hover-bg)]' : 'border-[var(--border-color)]'}`}
+                                className={`p-4 rounded-xl border-2 text-center transition-all flex flex-col items-center justify-center gap-2 min-h-[100px] hover:scale-[1.02] active:scale-95 ${readPrefs.includes(opt) ? 'border-[var(--accent-color)] bg-[var(--hover-bg)] shadow-md' : 'border-[var(--border-color)] bg-[var(--card-bg)] shadow-sm'}`}
                             >
-                                <span className="text-lg">{opt}</span>
-                                {readPrefs.includes(opt) && <Check size={20} className="text-[var(--accent-color)]" />}
+                                <span className={`text-sm font-bold ${readPrefs.includes(opt) ? 'text-[var(--text-main)]' : 'opacity-80'}`}>{opt}</span>
+                                {readPrefs.includes(opt) && <Check size={16} className="text-[var(--accent-color)] mt-1" />}
                             </button>
                         ))}
                     </div>
@@ -193,19 +193,19 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
             "Translations"
         ];
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--primary-bg)] text-[var(--text-main)] p-8 fade-in">
-                <div className="max-w-2xl w-full text-center">
-                    <h2 className="text-3xl font-bold mb-8 font-serif">What kind of writing do you publish?</h2>
+            <div className="h-full w-full overflow-y-auto bg-[var(--primary-bg)] text-[var(--text-main)] p-6 fade-in">
+                <div className="min-h-full flex flex-col items-center justify-center max-w-4xl mx-auto py-10">
+                    <h2 className="text-3xl font-bold mb-8 font-serif text-center">What kind of writing do you publish?</h2>
 
-                    <div className="flex flex-col gap-4 mb-12">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10 w-full">
                         {options.map(opt => (
                             <button
                                 key={opt}
                                 onClick={() => togglePref(writePrefs, setWritePrefs, opt)}
-                                className={`p-4 rounded-xl border-2 text-left flex items-center justify-between transition-all ${writePrefs.includes(opt) ? 'border-[var(--accent-color)] bg-[var(--hover-bg)]' : 'border-[var(--border-color)]'}`}
+                                className={`p-4 rounded-xl border-2 text-center transition-all flex flex-col items-center justify-center gap-2 min-h-[100px] hover:scale-[1.02] active:scale-95 ${writePrefs.includes(opt) ? 'border-[var(--accent-color)] bg-[var(--hover-bg)] shadow-md' : 'border-[var(--border-color)] bg-[var(--card-bg)] shadow-sm'}`}
                             >
-                                <span className="text-lg">{opt}</span>
-                                {writePrefs.includes(opt) && <Check size={20} className="text-[var(--accent-color)]" />}
+                                <span className={`text-sm font-bold ${writePrefs.includes(opt) ? 'text-[var(--text-main)]' : 'opacity-80'}`}>{opt}</span>
+                                {writePrefs.includes(opt) && <Check size={16} className="text-[var(--accent-color)] mt-1" />}
                             </button>
                         ))}
                     </div>
