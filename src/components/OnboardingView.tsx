@@ -144,7 +144,10 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
             "Satire / Humor",
             "Letters / Correspondence",
             "Philosophy / Theory",
-            "Art / Design"
+            "Art / Design",
+            "Screenplays / Scripts",
+            "Comics / Graphic Novels",
+            "Academic / Research"
         ];
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--primary-bg)] text-[var(--text-main)] p-8 fade-in">
@@ -184,7 +187,10 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
             "Recipes / Food",
             "Sci-Fi / Speculative",
             "Historical / Heritage",
-            "Diaries / Journals"
+            "Diaries / Journals",
+            "Lyrics / Songwriting",
+            "Manifestos / Polemics",
+            "Translations"
         ];
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--primary-bg)] text-[var(--text-main)] p-8 fade-in">

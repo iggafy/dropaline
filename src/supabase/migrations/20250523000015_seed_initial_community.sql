@@ -1,5 +1,5 @@
 
--- Seed 50 Realistic Fake Writers for Passing Lines Feed
+-- Seed Initial Community Profiles for Passing Lines Feed
 -- Run this to populate the discovery feed with diverse, interesting creators.
 
 INSERT INTO public.profiles (id, name, handle, bio, avatar_url, user_intent, onboarding_completed, writing_preferences)
