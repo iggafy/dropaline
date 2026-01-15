@@ -31,7 +31,7 @@ export const PassingLinesView: React.FC<PassingLinesProps> = ({ creators, onTogg
 
     const handleFollow = (id: string) => {
         onToggleFollow(id);
-        setIndex(prev => (prev + 1) % Math.max(creators.length, 1));
+        // no need to advance index as the current item will be removed from the list prop
     };
 
     const currentCreator = creators[index % (creators.length || 1)];
@@ -89,8 +89,8 @@ export const PassingLinesView: React.FC<PassingLinesProps> = ({ creators, onTogg
                         <button
                             onClick={() => handleFollow(currentCreator.id)}
                             className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all ${currentCreator.isFollowing
-                                    ? 'bg-transparent border-2 border-[var(--accent-color)] text-[var(--text-main)]'
-                                    : 'bg-[var(--text-main)] text-[var(--primary-bg)]'
+                                ? 'bg-transparent border-2 border-[var(--accent-color)] text-[var(--text-main)]'
+                                : 'bg-[var(--text-main)] text-[var(--primary-bg)]'
                                 }`}
                         >
                             {currentCreator.isFollowing ? (
@@ -109,7 +109,7 @@ export const PassingLinesView: React.FC<PassingLinesProps> = ({ creators, onTogg
                 </div>
             </div>
 
-            <p className="mt-8 opacity-40 text-sm">Reviewing {index + 1} of {creators.length}</p>
+
         </div>
     );
 };

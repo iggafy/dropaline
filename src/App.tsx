@@ -1046,7 +1046,7 @@ const App: React.FC = () => {
       case AppView.PASSING_LINES:
         return (
           <PassingLinesView
-            creators={creators}
+            creators={creators.filter(c => !c.isFollowing)}
             onToggleFollow={toggleSubscription}
             onRefreshInfo={() => handleSearchCreators('')}
           />
@@ -1158,7 +1158,28 @@ const App: React.FC = () => {
         return (
           <OnboardingView
             profile={userProfile!}
-            onComplete={() => {
+            onComplete={async () => {
+              // Ensure system connection (Fallback for trigger)
+              const SYSTEM_ID = '00000000-0000-0000-0000-000000000000';
+              const WELCOME_DROP_ID = '00000000-0000-0000-0000-000000000001';
+
+              if (session?.user) {
+                await supabase.from('subscriptions').upsert({
+                  subscriber_id: session.user.id,
+                  creator_id: SYSTEM_ID,
+                  auto_print: false
+                }, { onConflict: 'subscriber_id, creator_id', ignoreDuplicates: true });
+
+                await supabase.from('user_drop_statuses').upsert({
+                  user_id: session.user.id,
+                  drop_id: WELCOME_DROP_ID,
+                  status: 'received'
+                }, { onConflict: 'user_id, drop_id', ignoreDuplicates: true });
+
+                // Refresh data to show the new drop
+                fetchData();
+              }
+
               // Update local state to reflect completion without refetch
               const updated = { ...userProfile!, onboardingCompleted: true };
               setUserProfile(updated);
@@ -1171,7 +1192,7 @@ const App: React.FC = () => {
               // Persist printer choice immediately
               localStorage.setItem('dropaline_printer_name', p.name);
             }}
-            creators={creators}
+            creators={creators.filter(c => !c.isFollowing)}
             onToggleFollow={toggleSubscription}
           />
         );

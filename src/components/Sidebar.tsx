@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { AppView, UserProfile } from '../types';
 
-import logo from '../assets/logo.png';
+
 
 interface SidebarProps {
   currentView: AppView;
@@ -38,11 +38,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
 
   return (
     <div className="w-72 h-full bg-[var(--sidebar-bg)] backdrop-blur-2xl border-r border-[var(--glass-border)] flex flex-col p-6 select-none sidebar-container">
-      {/* Brand Header */}
-      <div className="flex items-center gap-3 px-2 mb-10">
-        <img src={logo} alt="Drop a Line" className="w-7 h-7 object-contain mix-blend-multiply dark:mix-blend-normal" />
-      </div>
-
       {/* User Profile - Premium Style */}
       <div className="flex flex-col gap-4 mb-10 px-2 bg-[var(--text-main)]/[0.02] p-4 rounded-3xl border border-[var(--glass-border)]">
         <div className="flex items-center gap-3">
@@ -50,8 +45,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
             <img src={userProfile.avatar} alt="User Avatar" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-sm font-bold text-[var(--text-main)] tracking-tight">{userProfile.name}</h1>
-            <span className="text-[11px] text-[var(--text-secondary)] font-semibold opacity-70">@{userProfile.handle}</span>
+            <h1 className="text-base font-bold text-[var(--text-main)] tracking-tight">{userProfile.name}</h1>
+            <span className="text-xs text-[var(--text-secondary)] font-semibold opacity-70">@{userProfile.handle}</span>
           </div>
         </div>
 
@@ -63,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
         <div
           className="sidebar-active-pill"
           style={{
-            transform: `translateY(${Math.max(0, activeIndex) * 44}px)`,
+            transform: `translateY(${Math.max(0, activeIndex) * 52}px)`,
             top: '0px',
             opacity: activeIndex === -1 ? 0 : 1
           }}
@@ -77,13 +72,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
           >
             <div className={`transition-all duration-300 ${currentView === item.id ? 'scale-110' : 'opacity-80'}`}>
               <item.icon
-                size={18}
+                size={22}
                 className={currentView === item.id ? item.colorClass : 'text-[var(--text-secondary)]'}
                 strokeWidth={currentView === item.id ? 2.5 : 2}
               />
             </div>
 
-            <span className={`flex-1 text-sm transition-all duration-300 ${currentView === item.id ? 'font-bold tracking-tight' : 'font-medium'}`}>
+            <span className={`flex-1 text-base transition-all duration-300 ${currentView === item.id ? 'font-bold tracking-tight' : 'font-medium'}`}>
               {item.label}
             </span>
 

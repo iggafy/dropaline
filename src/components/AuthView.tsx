@@ -19,27 +19,39 @@ export const AuthView: React.FC = () => {
     setError(null);
 
     try {
+      const cleanEmail = email.trim();
+
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: cleanEmail,
           password,
         });
-        if (error) throw error;
+        if (error) {
+          console.error("Login Error:", error);
+          throw error;
+        }
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: cleanEmail,
           password,
           options: {
             data: {
-              handle,
-              name,
+              handle: handle.trim(),
+              name: name.trim(),
             },
           },
         });
-        if (error) throw error;
+        if (error) {
+          console.error("Signup Error:", error);
+          throw error;
+        }
       }
     } catch (err: any) {
-      setError(err.message);
+      if (err.message && err.message.includes('Database error')) {
+        setError('Database error: Your chosen handle might be taken. Please try another.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }

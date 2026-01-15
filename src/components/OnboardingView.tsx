@@ -276,7 +276,7 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
         const handleDemoPass = () => setDemoIndex(prev => prev + 1);
         const handleDemoFollow = (id: string) => {
             onToggleFollow(id);
-            setDemoIndex(prev => prev + 1);
+            // No need to advance index as the current item will be removed from the list prop
         };
 
         return (
@@ -315,7 +315,7 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
                             </div>
                         </div>
                     ) : (
-                        <div className="py-20 text-center opacity-50">Loading writers...</div>
+                        <div className="py-20 text-center opacity-50">You're all set! Check your inbox.</div>
                     )}
 
                     <button
