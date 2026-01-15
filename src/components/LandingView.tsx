@@ -106,8 +106,8 @@ export const LandingView: React.FC = () => {
                         A smell. A texture. Something you can hold.
                     </p>
                     <p className="text-[18px] md:text-[20px] text-[#6e6e73] leading-[1.7] max-w-2xl mx-auto">
-                        Drop a Line brings writing back to the analog world. Writers publish. Readers subscribe.
-                        When a new story drops, it prints automatically—a real connection across any distance.
+                        Drop a Line brings reading back to the analog world. Writers share stories. Readers connect a printer.
+                        New stories print right away—so you can read on paper, anytime, anywhere.
                     </p>
                 </div>
             </section>
