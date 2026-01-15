@@ -1,10 +1,15 @@
 
+
 import React, { useEffect, useState } from 'react';
-import { Download, ArrowRight, Github, Check } from 'lucide-react';
+import { Download, ArrowRight, Github, Check, X } from 'lucide-react';
 import logo from '../assets/logo.png';
+import { PrivacyView } from './PrivacyView';
+import { TermsView } from './TermsView';
 
 export const LandingView: React.FC = () => {
     const [scrollY, setScrollY] = useState(0);
+    const [showCookieBanner, setShowCookieBanner] = useState(false);
+    const [currentPage, setCurrentPage] = useState<'landing' | 'privacy' | 'terms'>('landing');
     const latestVersion = "1.1.0";
     const githubRepo = "https://github.com/iggafy/dropaline";
 
@@ -18,8 +23,28 @@ export const LandingView: React.FC = () => {
     useEffect(() => {
         const handleScroll = () => setScrollY(window.scrollY);
         window.addEventListener('scroll', handleScroll, { passive: true });
+
+        // Check if user has accepted cookies
+        const cookieConsent = localStorage.getItem('dropaline_cookie_consent');
+        if (!cookieConsent) {
+            setShowCookieBanner(true);
+        }
+
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const acceptCookies = () => {
+        localStorage.setItem('dropaline_cookie_consent', 'accepted');
+        setShowCookieBanner(false);
+    };
+
+    if (currentPage === 'privacy') {
+        return <PrivacyView onBack={() => setCurrentPage('landing')} />;
+    }
+
+    if (currentPage === 'terms') {
+        return <TermsView onBack={() => setCurrentPage('landing')} />;
+    }
 
     return (
         <div className="min-h-screen bg-[#fafafa] text-[#1d1d1f] font-sans antialiased">
@@ -345,10 +370,10 @@ export const LandingView: React.FC = () => {
                             <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg" />
                             <span className="text-[15px] font-bold">Drop a Line</span>
                         </div>
-                        <div className="flex gap-8 text-[14px] font-medium text-[#6e6e73]">
-                            <a href={githubRepo} className="hover:text-black transition-colors">GitHub</a>
-                            <a href="#" className="hover:text-black transition-colors">Privacy</a>
-                            <a href="#" className="hover:text-black transition-colors">Terms</a>
+                        <div className="flex flex-wrap justify-center gap-6 md:gap-8 text-[14px] font-medium text-[#6e6e73]">
+                            <a href={githubRepo} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">GitHub</a>
+                            <button onClick={() => setCurrentPage('privacy')} className="hover:text-black transition-colors">Privacy</button>
+                            <button onClick={() => setCurrentPage('terms')} className="hover:text-black transition-colors">Terms</button>
                         </div>
                     </div>
                     <p className="text-center text-[13px] text-[#86868b]">
@@ -356,6 +381,41 @@ export const LandingView: React.FC = () => {
                     </p>
                 </div>
             </footer>
+
+            {/* Cookie Banner */}
+            {showCookieBanner && (
+                <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 animate-fadeInUp">
+                    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border border-black/10 p-6 md:p-8">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                            <div className="flex-1">
+                                <h3 className="text-[18px] font-bold mb-2">We use minimal cookies</h3>
+                                <p className="text-[14px] text-[#6e6e73] leading-[1.6]">
+                                    We use essential cookies to keep you logged in and remember your preferences. 
+                                    No tracking. No ads. No third parties.{' '}
+                                    <button onClick={() => setCurrentPage('privacy')} className="text-black font-semibold hover:underline">
+                                        Learn more
+                                    </button>
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <button
+                                    onClick={acceptCookies}
+                                    className="flex-1 md:flex-none bg-black text-white px-6 py-3 rounded-full text-[14px] font-semibold hover:bg-[#2d2d2d] transition-all"
+                                >
+                                    Accept
+                                </button>
+                                <button
+                                    onClick={() => setShowCookieBanner(false)}
+                                    className="p-3 hover:bg-black/5 rounded-full transition-colors"
+                                    aria-label="Close"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
