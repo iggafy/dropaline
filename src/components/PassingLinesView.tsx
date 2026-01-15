@@ -66,8 +66,8 @@ export const PassingLinesView: React.FC<PassingLinesProps> = ({ creators, onTogg
                             <button
                                 onClick={() => onToggleFollow(creator.id)}
                                 className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${creator.isFollowing
-                                        ? 'bg-[var(--accent-color)]/10 text-[var(--accent-color)] hover:bg-[var(--accent-color)]/20 shadow-none'
-                                        : 'bg-[var(--text-main)] text-[var(--primary-bg)] hover:opacity-90 shadow-lg hover:shadow-xl hover:-translate-y-1'
+                                    ? 'bg-transparent border border-[var(--accent-color)] text-[var(--text-main)]'
+                                    : 'bg-[var(--text-main)] text-[var(--primary-bg)] hover:opacity-90 shadow-lg hover:shadow-xl hover:-translate-y-1'
                                     }`}
                             >
                                 {creator.isFollowing ? (

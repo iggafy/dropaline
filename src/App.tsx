@@ -1162,7 +1162,7 @@ const App: React.FC = () => {
               // Update local state to reflect completion without refetch
               const updated = { ...userProfile!, onboardingCompleted: true };
               setUserProfile(updated);
-              setView(AppView.PASSING_LINES);
+              setView(AppView.INBOX);
             }}
             availablePrinters={availablePrinters}
             currentPrinter={printer}

@@ -134,11 +134,22 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
 
     // Step 2: Reading Preferences
     if (step === 2) {
-        const options = ["Short stories / Fiction", "Poetry / Essays", "Serialized stories / Zines", "Experimental / Flash fiction"];
+        const options = [
+            "Short stories / Fiction",
+            "Poetry / Essays",
+            "Serialized stories / Zines",
+            "Experimental / Flash fiction",
+            "Memoirs / Biographies",
+            "Tech / Code",
+            "Satire / Humor",
+            "Letters / Correspondence",
+            "Philosophy / Theory",
+            "Art / Design"
+        ];
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--primary-bg)] text-[var(--text-main)] p-8 fade-in">
-                <div className="max-w-xl w-full text-center">
-                    <h2 className="text-3xl font-bold mb-8 font-serif">What kind of stories do you like to receive?</h2>
+                <div className="max-w-2xl w-full text-center">
+                    <h2 className="text-3xl font-bold mb-8 font-serif">What kind of stories do you like to read?</h2>
 
                     <div className="flex flex-col gap-4 mb-12">
                         {options.map(opt => (
@@ -163,11 +174,22 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
 
     // Step 3: Writing Preferences
     if (step === 3) {
-        const options = ["Short stories / Fiction", "Poetry / Essays", "Serialized work / Issues", "Experimental formats"];
+        const options = [
+            "Short stories / Fiction",
+            "Poetry / Essays",
+            "Serialized work / Issues",
+            "Experimental formats",
+            "Journalism / Reporting",
+            "Reviews / Critiques",
+            "Recipes / Food",
+            "Sci-Fi / Speculative",
+            "Historical / Heritage",
+            "Diaries / Journals"
+        ];
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--primary-bg)] text-[var(--text-main)] p-8 fade-in">
-                <div className="max-w-xl w-full text-center">
-                    <h2 className="text-3xl font-bold mb-8 font-serif">What kind of writing do you want to publish?</h2>
+                <div className="max-w-2xl w-full text-center">
+                    <h2 className="text-3xl font-bold mb-8 font-serif">What kind of writing do you publish?</h2>
 
                     <div className="flex flex-col gap-4 mb-12">
                         {options.map(opt => (
@@ -196,7 +218,7 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
             <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--primary-bg)] text-[var(--text-main)] p-8 fade-in">
                 <div className="max-w-2xl w-full text-center">
                     <h2 className="text-3xl font-bold mb-4 font-serif">Almost ready!</h2>
-                    <p className="text-xl opacity-70 mb-12">Connect your printer to start receiving drops. Your printer is your inbox.</p>
+                    <p className="text-xl opacity-70 mb-12">Connect your printer to start receiving drops. Their stories will hit your inbox.</p>
 
                     <div className="bg-[var(--secondary-bg)] p-8 rounded-2xl mb-12 text-left">
                         <div className="flex items-center gap-4 mb-6">
@@ -248,7 +270,7 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
                 <div className="max-w-4xl w-full text-center">
                     <h2 className="text-4xl font-bold mb-6 font-serif">Here's Passing Lines</h2>
                     <p className="text-xl opacity-70 mb-16 max-w-2xl mx-auto">
-                        A parade of active writers. Follow the ones that call to you, and their stories will hit your printer.
+                        A parade of active writers. Follow the ones that call to you, and their stories will hit your inbox.
                     </p>
 
                     {/* Simple Concept Animation/Grid */}
@@ -259,10 +281,11 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
                                 <div className="text-center">
                                     <h3 className="font-bold text-sm truncate w-full">{creator.name}</h3>
                                     <p className="text-xs opacity-60 truncate w-full">@{creator.handle}</p>
+                                    <p className="text-xs opacity-70 line-clamp-2 w-full mt-1 italic">"{creator.bio || '...'}"</p>
                                 </div>
                                 <button
                                     onClick={() => onToggleFollow(creator.id)}
-                                    className={`w-full py-2 rounded-lg text-xs font-bold transition-colors ${creator.isFollowing ? 'bg-[var(--accent-color)] text-white' : 'bg-[var(--primary-bg)] hover:bg-[var(--hover-bg)]'}`}
+                                    className={`w-full py-2 rounded-lg text-xs font-bold transition-colors ${creator.isFollowing ? 'bg-transparent border border-[var(--accent-color)] text-[var(--text-main)]' : 'bg-[var(--text-main)] border border-[var(--text-main)] text-[var(--primary-bg)] hover:opacity-90'}`}
                                 >
                                     {creator.isFollowing ? 'Following' : 'Follow'}
                                 </button>
@@ -280,7 +303,7 @@ export const OnboardingView: React.FC<OnboardingProps> = ({
                         disabled={isSubmitting}
                         className="px-10 py-4 bg-[var(--text-main)] text-[var(--primary-bg)] rounded-full font-bold text-xl hover:opacity-90 transition-opacity flex items-center gap-3 mx-auto"
                     >
-                        {isSubmitting ? 'Starting...' : 'Enter Drop a Line'}
+                        {isSubmitting ? 'Finishing...' : 'Go to Inbox'}
                         <ArrowRight size={24} />
                     </button>
                 </div>

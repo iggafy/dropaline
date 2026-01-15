@@ -64,8 +64,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, userProf
         <div
           className="sidebar-active-pill"
           style={{
-            transform: `translateY(${activeIndex * 44}px)`,
-            top: '0px'
+            transform: `translateY(${Math.max(0, activeIndex) * 44}px)`,
+            top: '0px',
+            opacity: activeIndex === -1 ? 0 : 1
           }}
         />
 
