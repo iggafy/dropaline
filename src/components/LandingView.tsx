@@ -195,10 +195,8 @@ export const LandingView: React.FC = () => {
                         ))}
                     </div>
 
-                    <p className="text-[14px] text-[#86868b]">
-                        <a href={downloadLinks.releases} className="hover:text-black transition-colors">
-                            View all releases
-                        </a>
+                    <p className="text-[16px] text-[#6e6e73] font-medium">
+                        Fresh ink, fresh stories, free while it lasts.
                     </p>
                 </div>
             </section>
